@@ -1,51 +1,41 @@
 import os
-
-os.environ["LD_LIBRARY_PATH"] = "/app/forexconnect/lib"
-
 from forexconnect import ForexConnect, fxcorepy
-
-
-FXCM_URL = os.getenv(
-    "FXCM_URL",
-    "https://www.fxcorporate.com/Hosts.jsp"
-)
-
-
-SYMBOL_MAP = {
-    "EURUSD": "EUR/USD",
-    "GBPUSD": "GBP/USD",
-    "USDJPY": "USD/JPY",
-    "GBPJPY": "GBP/JPY",
-
-    "BTCUSDT": "BTC/USD",
-    "ETHUSDT": "ETH/USD"
-}
 
 
 def get_price(symbol):
 
-    login = os.getenv("FXCM_USERNAME")
-    password = os.getenv("FXCM_PASSWORD")
-
-    if symbol in SYMBOL_MAP:
-        symbol = SYMBOL_MAP[symbol]
-
-
     fx = ForexConnect()
+
+    username = os.getenv("FXCM_USERNAME")
+    password = os.getenv("FXCM_PASSWORD")
+    url = os.getenv("FXCM_URL")
 
     try:
 
         fx.login(
-            login,
+            username,
             password,
-            FXCM_URL,
+            url,
             "Demo"
         )
-
 
         offers = fx.get_table(
             fxcorepy.O2GTableType.OFFERS
         )
+
+
+        # FXCM format conversion
+        if symbol == "EURUSD":
+            symbol = "EUR/USD"
+
+        if symbol == "GBPUSD":
+            symbol = "GBP/USD"
+
+        if symbol == "USDJPY":
+            symbol = "USD/JPY"
+
+        if symbol == "GBPJPY":
+            symbol = "GBP/JPY"
 
 
         for row in offers:
@@ -53,17 +43,27 @@ def get_price(symbol):
             if row.instrument == symbol:
 
                 return {
-                    "symbol": symbol,
+                    "symbol": row.instrument,
                     "bid": row.bid,
                     "ask": row.ask
                 }
 
 
-        raise Exception(
-            f"{symbol} not found"
-        )
+        return {
+            "error": f"{symbol} not found"
+        }
+
+
+    except Exception as e:
+
+        return {
+            "error": str(e)
+        }
 
 
     finally:
 
-        fx.logout()
+        try:
+            fx.logout()
+        except:
+            pass
