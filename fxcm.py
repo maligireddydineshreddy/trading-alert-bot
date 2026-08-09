@@ -2,23 +2,47 @@ import os
 import requests
 
 
+FXCM_ENDPOINT = "https://endpoints-demo.fxcm.com"
+
 FXCM_USERNAME = os.getenv("FXCM_USERNAME")
 FXCM_PASSWORD = os.getenv("FXCM_PASSWORD")
-
-
-BASE_URL = "https://api-demo.fxcm.com"
 
 
 def fxcm_login():
 
     session = requests.Session()
 
-    # FXCM authentication
+
+    # Create session
+    r = session.post(
+
+        f"{FXCM_ENDPOINT}/trading/open_session",
+
+        timeout=20
+
+    )
+
+
+    r.raise_for_status()
+
+
+    session_data = r.json()
+
+
+    return session, session_data
+
+
+
+def authenticate():
+
+    session, data = fxcm_login()
+
+
     response = session.post(
 
-        f"{BASE_URL}/trading/open_session",
+        f"{FXCM_ENDPOINT}/trading/login",
 
-        data={
+        json={
 
             "username": FXCM_USERNAME,
 
@@ -34,50 +58,23 @@ def fxcm_login():
     response.raise_for_status()
 
 
-    data = response.json()
-
-
-    token = data.get("access_token")
-
-
-    if not token:
-
-        raise Exception(
-            "FXCM token missing"
-        )
-
-
-    return token
+    return session
 
 
 
+def get_price(symbol="EUR/USD"):
 
 
-def get_price(symbol="EURUSD"):
+    session = authenticate()
 
 
-    token = fxcm_login()
+    response = session.get(
 
-
-    headers = {
-
-        "Authorization":
-            f"Bearer {token}"
-
-    }
-
-
-
-    response = requests.get(
-
-        f"{BASE_URL}/trading/get_model",
-
-        headers=headers,
+        f"{FXCM_ENDPOINT}/trading/get_model",
 
         params={
 
-            "models":
-                "Offer"
+            "models":"Offer"
 
         },
 
@@ -89,30 +86,22 @@ def get_price(symbol="EURUSD"):
     response.raise_for_status()
 
 
-    data = response.json()
+    data=response.json()
 
 
-    offers = data.get(
-        "offers",
-        []
-    )
+    offers=data.get("offers",[])
 
 
     for offer in offers:
-
 
         if offer.get("currency") == symbol:
 
 
             return {
 
-                "symbol": symbol,
+                "bid":offer.get("sell"),
 
-                "bid":
-                    offer.get("sell"),
-
-                "ask":
-                    offer.get("buy")
+                "ask":offer.get("buy")
 
             }
 
