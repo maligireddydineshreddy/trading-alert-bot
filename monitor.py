@@ -1,20 +1,17 @@
 import asyncio
-import os
 
 from fxcm import get_price
-from database import get_active_alerts, disable_alert
+from database import (
+    get_active_alerts,
+    disable_alert
+)
 
 
-# Telegram bot instance will be connected from bot.py
-telegram_bot = None
+telegram_bot=None
 
 
 
-# ==========================
-# SEND TELEGRAM MESSAGE
-# ==========================
-
-async def send_alert(user_id, message):
+async def send_alert(user_id,message):
 
     if telegram_bot:
 
@@ -25,100 +22,68 @@ async def send_alert(user_id, message):
 
 
 
-# ==========================
-# CHECK ALERTS
-# ==========================
-
 async def check_alerts():
 
-
-    alerts = get_active_alerts()
+    alerts=get_active_alerts()
 
 
     for alert in alerts:
 
-
-        alert_id = alert[0]
-
-        user_id = alert[1]
-
-        symbol = alert[2]
-
-        target_price = alert[3]
-
+        alert_id=alert[0]
+        user_id=alert[1]
+        symbol=alert[2]
+        target=alert[3]
 
 
         try:
 
-            price = get_price(symbol)
+            price=get_price(symbol)
 
-
-            current_price = float(
+            current=float(
                 price["bid"]
             )
 
 
-
-            # Price reached
-
-            if current_price >= float(target_price):
-
-
-                message = (
-
-                    "🚨 PRICE ALERT HIT\n\n"
-
-                    f"Pair: {symbol}\n"
-
-                    f"Target: {target_price}\n"
-
-                    f"Current: {current_price}\n\n"
-
-                    "Your level has been reached."
-
-                )
-
-
+            if current >= float(target):
 
                 await send_alert(
                     user_id,
-                    message
+                    f"""
+🚨 PRICE ALERT HIT
+
+Pair: {symbol}
+
+Target:
+{target}
+
+Current:
+{current}
+"""
                 )
 
 
-                disable_alert(
-                    alert_id
-                )
+                disable_alert(alert_id)
 
 
 
         except Exception as e:
 
-
             print(
-                f"Monitor error {symbol}: {e}"
+                "Monitor error:",
+                e
             )
 
 
 
-# ==========================
-# BACKGROUND LOOP
-# ==========================
-
 async def monitor_loop():
 
-
     print(
-        "📡 Alert Monitor Started"
+        "📡 Monitor running"
     )
 
 
     while True:
 
-
         await check_alerts()
-
-
-        # Check every 10 seconds
 
         await asyncio.sleep(10)
