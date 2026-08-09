@@ -42,7 +42,7 @@ def init_db():
 
 
     # ==========================
-    # MIGRATION FOR OLD DATABASE
+    # DATABASE MIGRATION
     # ==========================
 
 
@@ -154,7 +154,7 @@ def add_alert(
 
 
 # ==========================
-# USER ALERTS
+# GET USER ACTIVE ALERTS
 # ==========================
 
 
@@ -177,6 +177,8 @@ def get_user_alerts(user_id):
 
         AND status='ACTIVE'
 
+        ORDER BY id DESC
+
         """,
 
         (
@@ -188,6 +190,7 @@ def get_user_alerts(user_id):
 
 
     alerts = cursor.fetchall()
+
 
 
     conn.close()
@@ -203,7 +206,7 @@ def get_user_alerts(user_id):
 
 
 # ==========================
-# ALL ACTIVE ALERTS
+# GET ALL ACTIVE ALERTS
 # ==========================
 
 
@@ -246,7 +249,7 @@ def get_active_alerts():
 
 
 # ==========================
-# REMOVE ALERT
+# REMOVE SINGLE ALERT
 # ==========================
 
 
@@ -288,7 +291,53 @@ def remove_alert(alert_id):
 
 
 # ==========================
-# DISABLE AFTER ALERT HIT
+# REMOVE MULTIPLE ALERTS
+# ==========================
+
+
+def remove_multiple_alerts(alert_ids):
+
+
+    conn = sqlite3.connect(DB_NAME)
+
+    cursor = conn.cursor()
+
+
+
+    for alert_id in alert_ids:
+
+
+        cursor.execute(
+
+            """
+            UPDATE alerts
+
+            SET status='DONE'
+
+            WHERE id=?
+
+            """,
+
+            (
+                alert_id,
+            )
+
+        )
+
+
+
+    conn.commit()
+
+    conn.close()
+
+
+
+
+
+
+
+# ==========================
+# DISABLE ALERT AFTER HIT
 # ==========================
 
 
