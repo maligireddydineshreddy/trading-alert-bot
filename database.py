@@ -4,7 +4,12 @@ import sqlite3
 DB_NAME = "alerts.db"
 
 
-def create_database():
+
+# ==========================
+# CREATE DATABASE
+# ==========================
+
+def init_db():
 
     conn = sqlite3.connect(DB_NAME)
 
@@ -34,6 +39,10 @@ def create_database():
 
 
 
+# ==========================
+# ADD ALERT
+# ==========================
+
 def add_alert(user_id, symbol, price):
 
     conn = sqlite3.connect(DB_NAME)
@@ -44,9 +53,14 @@ def add_alert(user_id, symbol, price):
     cursor.execute(
         """
         INSERT INTO alerts
-        (user_id, symbol, target_price)
+        (
+            user_id,
+            symbol,
+            target_price
+        )
 
         VALUES (?, ?, ?)
+
         """,
         (
             user_id,
@@ -62,6 +76,43 @@ def add_alert(user_id, symbol, price):
 
 
 
+# ==========================
+# USER ALERTS
+# ==========================
+
+def get_user_alerts(user_id):
+
+    conn = sqlite3.connect(DB_NAME)
+
+    cursor = conn.cursor()
+
+
+    cursor.execute(
+        """
+        SELECT *
+        FROM alerts
+        WHERE user_id=?
+        AND status='ACTIVE'
+
+        """,
+        (user_id,)
+    )
+
+
+    alerts = cursor.fetchall()
+
+
+    conn.close()
+
+
+    return alerts
+
+
+
+# ==========================
+# ALL ACTIVE ALERTS
+# ==========================
+
 def get_active_alerts():
 
     conn = sqlite3.connect(DB_NAME)
@@ -74,6 +125,7 @@ def get_active_alerts():
         SELECT *
         FROM alerts
         WHERE status='ACTIVE'
+
         """
     )
 
@@ -88,7 +140,11 @@ def get_active_alerts():
 
 
 
-def disable_alert(alert_id):
+# ==========================
+# REMOVE ALERT
+# ==========================
+
+def remove_alert(alert_id):
 
     conn = sqlite3.connect(DB_NAME)
 
@@ -98,8 +154,11 @@ def disable_alert(alert_id):
     cursor.execute(
         """
         UPDATE alerts
+
         SET status='DONE'
+
         WHERE id=?
+
         """,
         (alert_id,)
     )
@@ -108,3 +167,13 @@ def disable_alert(alert_id):
     conn.commit()
 
     conn.close()
+
+
+
+# ==========================
+# DISABLE AFTER HIT
+# ==========================
+
+def disable_alert(alert_id):
+
+    remove_alert(alert_id)
