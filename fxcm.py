@@ -10,7 +10,58 @@ from forexconnect import (
 
 
 
+# ==========================
+# COMMON FOREX PAIRS
+# ==========================
+
+
+COMMON_FOREX = [
+
+    # Major pairs
+    "EURUSD",
+    "GBPUSD",
+    "USDJPY",
+    "USDCHF",
+    "USDCAD",
+    "AUDUSD",
+    "NZDUSD",
+
+
+    # Major crosses
+    "EURGBP",
+    "EURJPY",
+    "EURCHF",
+    "EURAUD",
+
+    "GBPJPY",
+    "GBPCHF",
+    "GBPAUD",
+
+    "AUDJPY",
+    "CADJPY",
+    "CHFJPY",
+    "NZDJPY",
+
+
+    # Additional popular pairs
+    "AUDCAD",
+    "AUDNZD",
+    "EURNZD",
+    "GBPCAD"
+
+]
+
+
+
+
+
+# ==========================
+# FXCM LOGIN
+# ==========================
+
+
 def login_fxcm():
+
 
     fx = ForexConnect()
 
@@ -34,6 +85,12 @@ def login_fxcm():
 
 
 
+
+# ==========================
+# GET PRICE
+# ==========================
+
+
 def get_price(symbol):
 
 
@@ -43,13 +100,11 @@ def get_price(symbol):
     fx = login_fxcm()
 
 
-
     offers = fx.get_table(
 
         fxcorepy.O2GTableType.OFFERS
 
     )
-
 
 
     for row in offers:
@@ -58,11 +113,10 @@ def get_price(symbol):
         fx_symbol = row.instrument.replace("/", "")
 
 
-
         if fx_symbol == symbol:
 
 
-            price = {
+            result = {
 
 
                 "symbol": row.instrument,
@@ -77,7 +131,7 @@ def get_price(symbol):
             fx.logout()
 
 
-            return price
+            return result
 
 
 
@@ -96,42 +150,76 @@ def get_price(symbol):
 
 
 
+# ==========================
+# VALIDATE SYMBOL
+# ==========================
+
+
 def validate_symbol(symbol):
 
 
     symbol = symbol.upper().replace("/", "")
 
 
-    fx = login_fxcm()
+
+    # FAST LOCAL CHECK
+
+    if symbol in COMMON_FOREX:
+
+        return True
 
 
 
-    offers = fx.get_table(
+    # FALLBACK FXCM CHECK
 
-        fxcorepy.O2GTableType.OFFERS
-
-    )
+    try:
 
 
-
-    for row in offers:
-
-
-        fx_symbol = row.instrument.replace("/", "")
+        fx = login_fxcm()
 
 
 
-        if fx_symbol == symbol:
+        offers = fx.get_table(
 
+            fxcorepy.O2GTableType.OFFERS
 
-            fx.logout()
-
-
-            return True
+        )
 
 
 
-    fx.logout()
+        for row in offers:
+
+
+            fx_symbol = row.instrument.replace("/", "")
+
+
+
+            if fx_symbol == symbol:
+
+
+                fx.logout()
+
+                return True
+
+
+
+        fx.logout()
+
+
+
+    except Exception as e:
+
+
+        print(
+
+            "FXCM validation error:",
+
+            e,
+
+            flush=True
+
+        )
+
 
 
     return False
