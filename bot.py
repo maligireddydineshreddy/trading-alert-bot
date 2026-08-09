@@ -79,6 +79,7 @@ def fxcm_login():
     return token
 
 
+
 def get_fxcm_price():
 
     token = fxcm_login()
@@ -88,16 +89,20 @@ def get_fxcm_price():
         "Accept": "application/json"
     }
 
-    # FXCM API test endpoint
-    url = "https://api-demo.fxcm.com:443"
+    url = "https://api.fxcm.com/trading/get_model"
 
     response = requests.get(
         url,
         headers=headers,
+        params={
+            "models": "Offer"
+        },
         timeout=20
     )
 
-    return response.text
+    response.raise_for_status()
+
+    return response.json()
 
 
 
@@ -203,8 +208,8 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(
                 "🟢 Server Online\n\n"
                 "🟢 FXCM API connected\n\n"
-                "📊 FXCM Market Test:\n"
-                f"{price[:500]}"
+                "📊 FXCM Market Data:\n\n"
+                f"{str(price)[:500]}"
             )
 
 
@@ -223,11 +228,23 @@ def main():
     if not BOT_TOKEN:
         raise Exception("Missing BOT_TOKEN")
 
+    if not FXCM_USERNAME:
+        raise Exception("Missing FXCM_USERNAME")
+
+    if not FXCM_PASSWORD:
+        raise Exception("Missing FXCM_PASSWORD")
+
+
     app = Application.builder().token(BOT_TOKEN).build()
 
+
     app.add_handler(
-        CommandHandler("start", start)
+        CommandHandler(
+            "start",
+            start
+        )
     )
+
 
     app.add_handler(
         MessageHandler(
@@ -235,6 +252,7 @@ def main():
             menu_handler
         )
     )
+
 
     print("🚀 Bot started...")
 
