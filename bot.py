@@ -84,7 +84,9 @@ crypto_menu = [
 
     ["BTCUSDT", "ETHUSDT"],
 
-    ["SOLUSDT"],
+    ["SOLUSDT", "XRPUSDT"],
+
+    ["✍️ Enter Pair"],
 
     ["⬅️ Back"]
 
