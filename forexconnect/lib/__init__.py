@@ -1,20 +1,13 @@
 import os
+import sys
 
-origin_work_dir = os.getcwd()
-here = os.path.abspath(os.path.dirname(__file__))
-lib_path = os.path.join(here, "lib")
-os.chdir(lib_path)
 
-from forexconnect.lib import fxcorepy
-from forexconnect.ForexConnect import ForexConnect
-from forexconnect.TableManagerListener import TableManagerListener
-from forexconnect.SessionStatusListener import SessionStatusListener
-from forexconnect.LiveHistory import LiveHistoryCreator
-from forexconnect.EachRowListener import EachRowListener
-from forexconnect.ResponseListener import ResponseListener, ResponseListenerAsync
-from forexconnect.TableListener import TableListener
-from forexconnect.common import Common
+# Current directory
+lib_path = os.path.dirname(os.path.abspath(__file__))
 
-fxcorepy.O2GTransport.set_transport_modules_path(lib_path)
+# Add library path
+if lib_path not in sys.path:
+    sys.path.insert(0, lib_path)
 
-os.chdir(origin_work_dir)   
+# Load fxcorepy
+from . import fxcorepy
