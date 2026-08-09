@@ -11,10 +11,25 @@ FXCM_URL = os.getenv(
 )
 
 
+SYMBOL_MAP = {
+    "EURUSD": "EUR/USD",
+    "GBPUSD": "GBP/USD",
+    "USDJPY": "USD/JPY",
+    "GBPJPY": "GBP/JPY",
+
+    "BTCUSDT": "BTC/USD",
+    "ETHUSDT": "ETH/USD"
+}
+
+
 def get_price(symbol):
 
     login = os.getenv("FXCM_USERNAME")
     password = os.getenv("FXCM_PASSWORD")
+
+    if symbol in SYMBOL_MAP:
+        symbol = SYMBOL_MAP[symbol]
+
 
     fx = ForexConnect()
 
@@ -27,15 +42,18 @@ def get_price(symbol):
             "Demo"
         )
 
+
         offers = fx.get_table(
             fxcorepy.O2GTableType.OFFERS
         )
+
 
         for row in offers:
 
             if row.instrument == symbol:
 
                 return {
+                    "symbol": symbol,
                     "bid": row.bid,
                     "ask": row.ask
                 }
@@ -47,4 +65,5 @@ def get_price(symbol):
 
 
     finally:
+
         fx.logout()
