@@ -64,6 +64,7 @@ def get_current_price(symbol):
     # CRYPTO
     # ======================
 
+
     if symbol.endswith("USDT"):
 
 
@@ -75,6 +76,7 @@ def get_current_price(symbol):
             data["price"]
 
         )
+
 
 
 
@@ -130,6 +132,9 @@ async def check_alerts():
 
         target = float(alert[3])
 
+        direction = alert[4]
+
+
 
 
 
@@ -142,9 +147,10 @@ async def check_alerts():
 
 
 
+
             print(
 
-                f"{symbol} | Current: {current} | Target: {target}",
+                f"{symbol} | Current: {current} | Target: {target} | {direction}",
 
                 flush=True
 
@@ -154,11 +160,48 @@ async def check_alerts():
 
 
 
-            # Current system:
-            # Alert only when price goes ABOVE target
 
 
-            if current >= target:
+            # ==========================
+            # DIRECTION CHECK
+            # ==========================
+
+
+
+            hit = False
+
+
+
+            if direction == "ABOVE":
+
+
+                if current >= target:
+
+                    hit = True
+
+
+
+
+
+            elif direction == "BELOW":
+
+
+                if current <= target:
+
+                    hit = True
+
+
+
+
+
+
+
+            # ==========================
+            # SEND ALERT
+            # ==========================
+
+
+            if hit:
 
 
 
@@ -174,6 +217,10 @@ async def check_alerts():
 
 Symbol:
 {symbol}
+
+
+Direction:
+{direction}
 
 
 Target:
