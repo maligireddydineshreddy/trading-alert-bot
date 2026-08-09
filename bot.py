@@ -1,3 +1,5 @@
+import requests
+from datetime import datetime
 import os
 import asyncio
 
@@ -264,7 +266,104 @@ async def start(
         )
 
     )
+# ==================================================
+# SYSTEM STATUS CHECK
+# ==================================================
 
+async def system_status(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    # BOT
+    bot_status = "🟢 Bot: Online"
+
+
+    # FXCM CHECK
+
+    try:
+
+        fxcm_check = get_price("EURUSD")
+
+        if fxcm_check:
+
+            fxcm_status = "🟢 FXCM: Connected"
+
+        else:
+
+            fxcm_status = "🔴 FXCM: Disconnected"
+
+
+    except Exception:
+
+        fxcm_status = "🔴 FXCM: Disconnected"
+
+
+
+
+    # BINANCE CHECK
+
+    try:
+
+        response = requests.get(
+            "https://api.binance.com/api/v3/ping",
+            timeout=5
+        )
+
+
+        if response.status_code == 200:
+
+            binance_status = "🟢 Binance: Connected"
+
+        else:
+
+            binance_status = "🔴 Binance: Disconnected"
+
+
+
+    except Exception:
+
+        binance_status = "🔴 Binance: Disconnected"
+
+
+
+
+    current_time = datetime.now().strftime(
+        "%H:%M:%S"
+    )
+
+
+
+    message = f"""
+ℹ️ System Status
+
+
+{bot_status}
+
+{fxcm_status}
+
+{binance_status}
+
+
+🕒 Last Check:
+{current_time}
+"""
+
+
+
+    await update.message.reply_text(
+
+        message,
+
+        reply_markup=ReplyKeyboardMarkup(
+
+            main_menu,
+
+            resize_keyboard=True
+
+        )
+
+    )
 # ==================================================
 # MENU HANDLER
 # ==================================================
@@ -776,23 +875,10 @@ async def menu_handler(
 
     elif text == "ℹ️ Status":
 
-
-        await update.message.reply_text(
-
-            """
-ℹ️ System Status
-
-
-🟢 Bot: Online
-
-🟢 FXCM: Connected
-
-🟢 Binance: Connected
-
-"""
-
-        )
-
+    await system_status(
+        update,
+        context
+    )
 
 
 
