@@ -12,4 +12,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 ENV LD_LIBRARY_PATH=/app/forexconnect/lib
 
-CMD ["python","bot.py"]
+CMD ["python", "bot.py"]
