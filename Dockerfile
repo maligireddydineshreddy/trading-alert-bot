@@ -8,5 +8,6 @@ RUN pip install --upgrade pip
 
 RUN pip install -r requirements.txt
 
+ENV PYTHONPATH=/app/forexconnect
 
 CMD ["python","bot.py"]
