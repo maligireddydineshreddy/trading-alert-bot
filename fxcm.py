@@ -5,39 +5,54 @@ os.environ["LD_LIBRARY_PATH"] = "/app/forexconnect/lib"
 from forexconnect import ForexConnect, fxcorepy
 
 
-def get_price(symbol):
+FXCM_URL = os.getenv(
+    "FXCM_URL",
+    "https://www.fxcorporate.com/Hosts.jsp"
+)
 
-    fx = ForexConnect()
+
+def get_price(symbol):
 
     login = os.getenv("FXCM_USERNAME")
     password = os.getenv("FXCM_PASSWORD")
-    url = os.getenv("FXCM_URL")
+
+    if not login or not password:
+        raise Exception(
+            "FXCM credentials missing"
+        )
+
+    fx = ForexConnect()
+
+    try:
+
+        fx.login(
+            login,
+            password,
+            FXCM_URL,
+            "Demo"
+        )
 
 
-    fx.login(
-        login,
-        password,
-        url,
-        "Demo",
-        session_status_callback=None
-    )
+        offers = fx.get_table(
+            fxcorepy.O2GTableType.Offers
+        )
 
 
-    offers = fx.get_table(
-        fxcorepy.O2GTableType.Offers
-    )
+        for row in offers:
+
+            if row.instrument == symbol:
+
+                return {
+                    "bid": row.bid,
+                    "ask": row.ask
+                }
 
 
-    for row in offers:
-
-        if row.instrument == symbol:
-
-            return {
-                "bid": row.bid,
-                "ask": row.ask
-            }
+        raise Exception(
+            f"Symbol {symbol} not found"
+        )
 
 
-    raise Exception(
-        "Symbol not found"
-    )
+    finally:
+
+        fx.logout()
