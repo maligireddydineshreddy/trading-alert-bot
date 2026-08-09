@@ -1,5 +1,21 @@
 import os
+
+os.environ["LD_LIBRARY_PATH"] = "/app/forexconnect/lib"
+
 from forexconnect import ForexConnect, fxcorepy
+
+
+SYMBOL_MAP = {
+    "EURUSD": "EUR/USD",
+    "GBPUSD": "GBP/USD",
+    "USDJPY": "USD/JPY",
+    "GBPJPY": "GBP/JPY",
+
+    "BTCUSDT": "BTC/USD",
+    "ETHUSDT": "ETH/USD",
+
+    "XAUUSD": "XAU/USD",
+}
 
 
 def get_price(symbol):
@@ -10,6 +26,7 @@ def get_price(symbol):
     password = os.getenv("FXCM_PASSWORD")
     url = os.getenv("FXCM_URL")
 
+
     try:
 
         fx.login(
@@ -19,28 +36,18 @@ def get_price(symbol):
             "Demo"
         )
 
-        offers = fx.get_table(
+
+        fx_table = fx.get_table(
             fxcorepy.O2GTableType.OFFERS
         )
 
 
-        # FXCM format conversion
-        if symbol == "EURUSD":
-            symbol = "EUR/USD"
-
-        if symbol == "GBPUSD":
-            symbol = "GBP/USD"
-
-        if symbol == "USDJPY":
-            symbol = "USD/JPY"
-
-        if symbol == "GBPJPY":
-            symbol = "GBP/JPY"
+        target = SYMBOL_MAP.get(symbol, symbol)
 
 
-        for row in offers:
+        for row in fx_table:
 
-            if row.instrument == symbol:
+            if row.instrument == target:
 
                 return {
                     "symbol": row.instrument,
@@ -49,16 +56,9 @@ def get_price(symbol):
                 }
 
 
-        return {
-            "error": f"{symbol} not found"
-        }
-
-
-    except Exception as e:
-
-        return {
-            "error": str(e)
-        }
+        raise Exception(
+            f"{target} not found"
+        )
 
 
     finally:
