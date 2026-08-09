@@ -12,7 +12,7 @@ from forexconnect import (
 
 
 # ==========================
-# COMMON FOREX PAIRS
+# COMMON SYMBOLS
 # ==========================
 
 
@@ -49,13 +49,6 @@ COMMON_FOREX = [
 
 
 
-
-
-# ==========================
-# COMMON COMMODITIES
-# ==========================
-
-
 COMMON_COMMODITIES = [
 
     "XAUUSD",
@@ -69,52 +62,115 @@ COMMON_COMMODITIES = [
 
 
 
+# ==========================
+# GLOBAL FXCM CONNECTION
+# ==========================
+
+
+fx_connection = None
+
+
+
+
+
 
 # ==========================
-# FXCM LOGIN
+# INITIALIZE FXCM
 # ==========================
 
 
-def login_fxcm():
-
-    fx = ForexConnect()
+def init_fxcm():
 
 
-    try:
-
-
-        fx.login(
-
-            os.getenv("FXCM_USERNAME"),
-
-            os.getenv("FXCM_PASSWORD"),
-
-            os.getenv("FXCM_URL"),
-
-            "Demo"
-
-        )
-
-
-        return fx
+    global fx_connection
 
 
 
-    except Exception as e:
+    if fx_connection:
 
 
         print(
 
-            "FXCM LOGIN ERROR:",
-
-            repr(e),
+            "FXCM already connected",
 
             flush=True
 
         )
 
+        return
 
-        raise
+
+
+
+
+    print(
+
+        "Connecting FXCM...",
+
+        flush=True
+
+    )
+
+
+
+    fx = ForexConnect()
+
+
+
+    fx.login(
+
+        os.getenv("FXCM_USERNAME"),
+
+        os.getenv("FXCM_PASSWORD"),
+
+        os.getenv("FXCM_URL"),
+
+        "Demo"
+
+    )
+
+
+
+    fx_connection = fx
+
+
+
+    print(
+
+        "✅ FXCM Connected",
+
+        flush=True
+
+    )
+
+
+
+
+
+
+
+
+# ==========================
+# CHECK CONNECTION
+# ==========================
+
+
+def get_connection():
+
+
+    global fx_connection
+
+
+
+    if fx_connection is None:
+
+
+        init_fxcm()
+
+
+
+    return fx_connection
+
 
 
 
@@ -130,182 +186,117 @@ def login_fxcm():
 def get_price(symbol):
 
 
-    symbol = symbol.upper().replace("/", "")
+    symbol = (
 
+        symbol
 
+        .upper()
 
-    last_error = None
-
-
-
-
-
-    # RETRY 3 TIMES
-
-    for attempt in range(3):
-
-
-        fx = None
-
-
-
-        try:
-
-
-            print(
-
-                f"FXCM price request {symbol} attempt {attempt+1}",
-
-                flush=True
-
-            )
-
-
-
-            fx = login_fxcm()
-
-
-
-            offers = fx.get_table(
-
-                fxcorepy.O2GTableType.OFFERS
-
-            )
-
-
-
-
-
-            for row in offers:
-
-
-
-                fx_symbol = (
-
-                    row.instrument
-
-                    .replace("/", "")
-
-                    .upper()
-
-                )
-
-
-
-
-
-                if fx_symbol == symbol:
-
-
-
-                    result = {
-
-
-                        "symbol": row.instrument,
-
-
-                        "bid": row.bid,
-
-
-                        "ask": row.ask
-
-
-                    }
-
-
-
-
-
-                    print(
-
-                        "FXCM PRICE:",
-
-                        result,
-
-                        flush=True
-
-                    )
-
-
-
-                    return result
-
-
-
-
-
-
-            raise Exception(
-
-                f"{symbol} not found in FXCM offers"
-
-            )
-
-
-
-
-
-
-
-        except Exception as e:
-
-
-
-            last_error = e
-
-
-
-            print(
-
-                f"FXCM attempt {attempt+1} failed:",
-
-                repr(e),
-
-                flush=True
-
-            )
-
-
-
-            time.sleep(2)
-
-
-
-
-
-
-
-        finally:
-
-
-
-            if fx:
-
-
-                try:
-
-
-                    fx.logout()
-
-
-
-                except:
-
-
-                    pass
-
-
-
-
-
-
-
-
-    raise Exception(
-
-        f"FXCM timeout fetching {symbol}: {last_error}"
+        .replace("/", "")
 
     )
+
+
+
+    global fx_connection
+
+
+
+    try:
+
+
+
+        fx = get_connection()
+
+
+
+        offers = fx.get_table(
+
+            fxcorepy.O2GTableType.OFFERS
+
+        )
+
+
+
+
+
+        for row in offers:
+
+
+
+            fx_symbol = (
+
+                row.instrument
+
+                .replace("/", "")
+
+                .upper()
+
+            )
+
+
+
+
+
+            if fx_symbol == symbol:
+
+
+
+                return {
+
+
+                    "symbol": row.instrument,
+
+
+                    "bid": row.bid,
+
+
+                    "ask": row.ask
+
+
+                }
+
+
+
+
+
+        raise Exception(
+
+            f"{symbol} not found"
+
+        )
+
+
+
+
+
+    except Exception as e:
+
+
+
+        print(
+
+            "FXCM price error:",
+
+            e,
+
+            flush=True
+
+        )
+
+
+
+        # reconnect once
+
+
+        fx_connection = None
+
+
+        init_fxcm()
+
+
+
+        return get_price(symbol)
 
 
 
@@ -337,9 +328,6 @@ def validate_symbol(symbol):
 
 
 
-    # LOCAL CHECK FIRST
-
-
     if symbol in COMMON_FOREX:
 
 
@@ -359,18 +347,11 @@ def validate_symbol(symbol):
 
 
 
-    # FXCM CHECK
-
-
-    fx = None
-
-
-
     try:
 
 
 
-        fx = login_fxcm()
+        fx = get_connection()
 
 
 
@@ -411,7 +392,6 @@ def validate_symbol(symbol):
 
 
 
-
     except Exception as e:
 
 
@@ -420,7 +400,7 @@ def validate_symbol(symbol):
 
             "FXCM validation error:",
 
-            repr(e),
+            e,
 
             flush=True
 
@@ -430,26 +410,52 @@ def validate_symbol(symbol):
 
 
 
-    finally:
-
-
-
-        if fx:
-
-
-            try:
-
-
-                fx.logout()
-
-
-            except:
-
-
-                pass
-
-
-
-
-
     return False
+
+
+
+
+
+
+
+
+# ==========================
+# CLOSE CONNECTION
+# ==========================
+
+
+def close_fxcm():
+
+
+    global fx_connection
+
+
+
+    if fx_connection:
+
+
+        try:
+
+
+            fx_connection.logout()
+
+
+
+        except:
+
+
+            pass
+
+
+
+        fx_connection = None
+
+
+
+        print(
+
+            "FXCM disconnected",
+
+            flush=True
+
+        )
