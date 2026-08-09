@@ -1,4 +1,5 @@
 import os
+import time
 
 os.environ["LD_LIBRARY_PATH"] = "/app/forexconnect/lib"
 
@@ -69,7 +70,6 @@ COMMON_COMMODITIES = [
 
 
 
-
 # ==========================
 # FXCM LOGIN
 # ==========================
@@ -77,24 +77,44 @@ COMMON_COMMODITIES = [
 
 def login_fxcm():
 
-
     fx = ForexConnect()
 
 
-    fx.login(
-
-        os.getenv("FXCM_USERNAME"),
-
-        os.getenv("FXCM_PASSWORD"),
-
-        os.getenv("FXCM_URL"),
-
-        "Demo"
-
-    )
+    try:
 
 
-    return fx
+        fx.login(
+
+            os.getenv("FXCM_USERNAME"),
+
+            os.getenv("FXCM_PASSWORD"),
+
+            os.getenv("FXCM_URL"),
+
+            "Demo"
+
+        )
+
+
+        return fx
+
+
+
+    except Exception as e:
+
+
+        print(
+
+            "FXCM LOGIN ERROR:",
+
+            repr(e),
+
+            flush=True
+
+        )
+
+
+        raise
 
 
 
@@ -113,59 +133,180 @@ def get_price(symbol):
     symbol = symbol.upper().replace("/", "")
 
 
-    fx = login_fxcm()
 
-
-
-    offers = fx.get_table(
-
-        fxcorepy.O2GTableType.OFFERS
-
-    )
-
-
-
-    for row in offers:
-
-
-        fx_symbol = row.instrument.replace("/", "")
-
-
-
-        if fx_symbol == symbol:
-
-
-            result = {
-
-
-                "symbol": row.instrument,
-
-                "bid": row.bid,
-
-                "ask": row.ask
-
-            }
-
-
-
-            fx.logout()
-
-
-            return result
+    last_error = None
 
 
 
 
 
-    fx.logout()
+    # RETRY 3 TIMES
+
+    for attempt in range(3):
+
+
+        fx = None
+
+
+
+        try:
+
+
+            print(
+
+                f"FXCM price request {symbol} attempt {attempt+1}",
+
+                flush=True
+
+            )
+
+
+
+            fx = login_fxcm()
+
+
+
+            offers = fx.get_table(
+
+                fxcorepy.O2GTableType.OFFERS
+
+            )
+
+
+
+
+
+            for row in offers:
+
+
+
+                fx_symbol = (
+
+                    row.instrument
+
+                    .replace("/", "")
+
+                    .upper()
+
+                )
+
+
+
+
+
+                if fx_symbol == symbol:
+
+
+
+                    result = {
+
+
+                        "symbol": row.instrument,
+
+
+                        "bid": row.bid,
+
+
+                        "ask": row.ask
+
+
+                    }
+
+
+
+
+
+                    print(
+
+                        "FXCM PRICE:",
+
+                        result,
+
+                        flush=True
+
+                    )
+
+
+
+                    return result
+
+
+
+
+
+
+            raise Exception(
+
+                f"{symbol} not found in FXCM offers"
+
+            )
+
+
+
+
+
+
+
+        except Exception as e:
+
+
+
+            last_error = e
+
+
+
+            print(
+
+                f"FXCM attempt {attempt+1} failed:",
+
+                repr(e),
+
+                flush=True
+
+            )
+
+
+
+            time.sleep(2)
+
+
+
+
+
+
+
+        finally:
+
+
+
+            if fx:
+
+
+                try:
+
+
+                    fx.logout()
+
+
+
+                except:
+
+
+                    pass
+
+
+
+
+
 
 
 
     raise Exception(
 
-        f"{symbol} not found"
+        f"FXCM timeout fetching {symbol}: {last_error}"
 
     )
+
 
 
 
@@ -182,29 +323,51 @@ def get_price(symbol):
 def validate_symbol(symbol):
 
 
-    symbol = symbol.upper().replace("/", "")
+    symbol = (
+
+        symbol
+
+        .upper()
+
+        .replace("/", "")
+
+    )
 
 
 
-    # FAST LOCAL CHECK
+
+
+    # LOCAL CHECK FIRST
+
 
     if symbol in COMMON_FOREX:
 
+
         return True
+
+
 
 
 
     if symbol in COMMON_COMMODITIES:
 
+
         return True
 
 
 
 
 
-    # FXCM FALLBACK CHECK
+
+    # FXCM CHECK
+
+
+    fx = None
+
+
 
     try:
+
 
 
         fx = login_fxcm()
@@ -219,38 +382,73 @@ def validate_symbol(symbol):
 
 
 
+
+
         for row in offers:
 
 
-            fx_symbol = row.instrument.replace("/", "")
+
+            fx_symbol = (
+
+                row.instrument
+
+                .replace("/", "")
+
+                .upper()
+
+            )
+
+
 
 
 
             if fx_symbol == symbol:
 
 
-                fx.logout()
-
                 return True
 
 
 
-        fx.logout()
 
 
 
     except Exception as e:
 
 
+
         print(
 
             "FXCM validation error:",
 
-            e,
+            repr(e),
 
             flush=True
 
         )
+
+
+
+
+
+    finally:
+
+
+
+        if fx:
+
+
+            try:
+
+
+                fx.logout()
+
+
+            except:
+
+
+                pass
+
+
 
 
 
