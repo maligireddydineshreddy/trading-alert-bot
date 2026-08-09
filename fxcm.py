@@ -17,15 +17,16 @@ def create_session():
         f"{FXCM_ENDPOINT}/iam/trading-systems/{FXCM_USERNAME}",
         headers={
             "X-COOKIE-DOMAIN": "fxcm.com"
-        },
-        timeout=20
+        }
     )
 
     r.raise_for_status()
 
     system = r.json()[0]
 
+
     xsrf = s.cookies.get("XSRF-TOKEN")
+
 
     # login
     r = s.post(
@@ -38,20 +39,20 @@ def create_session():
             "appName": "TelegramTradingAlertBot"
         },
         headers={
-            "X-COOKIE-DOMAIN": "fxcm.com",
-            "X-XSRF-TOKEN": xsrf
-        },
-        timeout=20
+            "X-COOKIE-DOMAIN":"fxcm.com",
+            "X-XSRF-TOKEN":xsrf
+        }
     )
 
     r.raise_for_status()
 
-    token = r.json()["accessToken"]
+    data=r.json()
 
     s.headers.update({
-        "Authorization": f"Bearer {token}",
-        "Accept": "application/json"
+        "Authorization": "Bearer " + data["accessToken"],
+        "X-COOKIE-DOMAIN":"fxcm.com"
     })
+
 
     return s
 
@@ -59,20 +60,32 @@ def create_session():
 
 def get_price(symbol="EUR/USD"):
 
-    s = create_session()
+    s=create_session()
 
-    url = (
-        f"{FXCM_ENDPOINT}"
-        f"/trading/marketdata/{symbol}"
+
+    url=f"{FXCM_ENDPOINT}/trading/get_model"
+
+
+    params={
+        "models":"Offer",
+        "symbols":symbol
+    }
+
+
+    r=s.get(
+        url,
+        params=params
     )
 
-    r = s.get(url, timeout=20)
 
-    print("STATUS:", r.status_code)
-    print(r.text[:300])
+    print("STATUS:",r.status_code)
+    print(r.text[:500])
+
 
     r.raise_for_status()
 
-    data = r.json()
+
+    data=r.json()
+
 
     return data
