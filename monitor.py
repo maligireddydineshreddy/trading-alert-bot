@@ -1,7 +1,10 @@
 import asyncio
 
+
 from fxcm import get_price
+
 from crypto import get_crypto_price
+
 
 from database import (
     get_active_alerts,
@@ -9,7 +12,9 @@ from database import (
 )
 
 
+
 telegram_bot = None
+
 
 
 
@@ -21,9 +26,13 @@ def set_bot(bot):
 
 
 
+
+
 async def send_alert(user_id, message):
 
+
     if telegram_bot:
+
 
         await telegram_bot.send_message(
 
@@ -35,19 +44,19 @@ async def send_alert(user_id, message):
 
 
 
+
+
+
 def get_current_price(symbol):
 
 
-    crypto_symbols = [
-
-        "BTCUSDT",
-        "ETHUSDT",
-        "SOLUSDT"
-
-    ]
+    symbol = symbol.upper()
 
 
-    if symbol in crypto_symbols:
+
+    # Crypto
+
+    if symbol.endswith("USDT"):
 
 
         data = get_crypto_price(symbol)
@@ -59,6 +68,9 @@ def get_current_price(symbol):
 
         )
 
+
+
+    # Forex
 
     else:
 
@@ -75,10 +87,14 @@ def get_current_price(symbol):
 
 
 
+
+
+
 async def check_alerts():
 
 
     alerts = get_active_alerts()
+
 
 
     for alert in alerts:
@@ -141,6 +157,7 @@ Current:
 
 
 
+
         except Exception as e:
 
 
@@ -158,6 +175,8 @@ Current:
 
 
 
+
+
 async def monitor_loop():
 
 
@@ -168,6 +187,7 @@ async def monitor_loop():
         flush=True
 
     )
+
 
 
     while True:
