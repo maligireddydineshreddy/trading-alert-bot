@@ -20,7 +20,6 @@ from telegram.ext import (
 )
 
 
-
 from database import (
     init_db,
     add_alert,
@@ -29,12 +28,10 @@ from database import (
 )
 
 
-
 from fxcm import (
     get_price,
     validate_symbol
 )
-
 
 
 from crypto import (
@@ -43,16 +40,11 @@ from crypto import (
 )
 
 
-
 import monitor
 
 
 
-
-
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-
-
 
 
 
@@ -77,8 +69,6 @@ main_menu = [
 
 
 
-
-
 # ==========================
 # MARKET MENU
 # ==========================
@@ -91,9 +81,6 @@ market_menu = [
     ["🥇 Commodities", "📊 Indices"]
 
 ]
-
-
-
 
 
 
@@ -120,9 +107,6 @@ forex_menu = [
 
 
 
-
-
-
 # ==========================
 # CRYPTO MENU
 # ==========================
@@ -139,9 +123,6 @@ crypto_menu = [
     ["⬅️ Back"]
 
 ]
-
-
-
 
 
 
@@ -168,9 +149,6 @@ commodity_menu = [
 
 
 
-
-
-
 # ==========================
 # INDICES MENU
 # ==========================
@@ -192,9 +170,6 @@ indices_menu = [
 
 
 
-
-
-
 # ==========================
 # HOT SYMBOLS
 # ==========================
@@ -202,16 +177,11 @@ indices_menu = [
 
 HOT_SYMBOLS = [
 
-    # Forex
-
     "EURUSD",
     "GBPUSD",
     "USDJPY",
     "GBPJPY",
 
-
-
-    # Crypto
 
     "BTCUSDT",
     "ETHUSDT",
@@ -219,17 +189,11 @@ HOT_SYMBOLS = [
     "XRPUSDT",
 
 
-
-    # Commodities
-
     "XAUUSD",
     "XAGUSD",
     "USOIL",
     "COPPER",
 
-
-
-    # Indices
 
     "SPX500",
     "NAS100",
@@ -237,6 +201,12 @@ HOT_SYMBOLS = [
     "US100"
 
 ]
+
+
+
+
+
+
 # ==========================
 # START COMMAND
 # ==========================
@@ -266,14 +236,6 @@ async def start(
 
     )
 
-
-
-
-
-
-
-
-
 # ==========================
 # MENU HANDLER
 # ==========================
@@ -288,8 +250,6 @@ async def menu_handler(
     text = update.message.text
 
     user_id = update.message.from_user.id
-
-
 
 
 
@@ -321,9 +281,6 @@ async def menu_handler(
             )
 
         )
-
-
-
 
 
 
@@ -362,9 +319,6 @@ async def menu_handler(
 
 
 
-
-
-
     # ==========================
     # CRYPTO
     # ==========================
@@ -391,9 +345,6 @@ async def menu_handler(
             )
 
         )
-
-
-
 
 
 
@@ -432,9 +383,6 @@ async def menu_handler(
 
 
 
-
-
-
     # ==========================
     # INDICES
     # ==========================
@@ -467,11 +415,8 @@ async def menu_handler(
 
 
 
-
-
-
     # ==========================
-    # MANUAL INPUT
+    # MANUAL SYMBOL INPUT
     # ==========================
 
 
@@ -493,6 +438,8 @@ async def menu_handler(
 
 
 
+
+
         if text == "✍️ Enter Crypto Pair":
 
 
@@ -510,6 +457,8 @@ async def menu_handler(
                 "ADAUSDT"
 
             )
+
+
 
 
 
@@ -537,6 +486,8 @@ async def menu_handler(
 
 
 
+
+
         elif text == "✏️ Enter Index":
 
 
@@ -559,6 +510,8 @@ async def menu_handler(
 
 
 
+
+
         else:
 
 
@@ -572,8 +525,8 @@ async def menu_handler(
 
                 "Examples:\n"
                 "AUDUSD\n"
-                "AUD/USD\n"
-                "EURJPY"
+                "EURJPY\n"
+                "AUD/USD"
 
             )
 
@@ -584,9 +537,8 @@ async def menu_handler(
 
 
 
-
     # ==========================
-    # HOT BUTTON SYMBOLS
+    # HOT SYMBOL BUTTONS
     # ==========================
 
 
@@ -604,10 +556,9 @@ async def menu_handler(
             "Enter target price:"
 
         )
-
-# ==========================
-# BACK BUTTON
-# ==========================
+    # ==========================
+    # BACK BUTTON
+    # ==========================
 
 
     elif text == "⬅️ Back":
@@ -637,11 +588,9 @@ async def menu_handler(
 
 
 
-
-
-# ==========================
-# MY ALERTS
-# ==========================
+    # ==========================
+    # MY ALERTS
+    # ==========================
 
 
     elif text == "📋 My Alerts":
@@ -660,36 +609,34 @@ async def menu_handler(
 
             )
 
-
-        else:
-
-
-            msg = "📋 Your Active Alerts:\n\n"
+            return
 
 
 
-            for a in alerts:
 
 
-                msg += (
-
-                    f"ID: {a[0]}\n"
-
-                    f"Symbol: {a[2]}\n"
-
-                    f"Target: {a[3]}\n"
-
-                    f"Direction: {a[4]}\n"
-
-                    f"Status: {a[5]}\n\n"
-
-                )
+        msg = "📋 Your Active Alerts:\n\n"
 
 
 
-            await update.message.reply_text(msg)
+        for a in alerts:
 
 
+            msg += (
+
+                f"🆔 ID: {a[0]}\n"
+
+                f"📊 Symbol: {a[2]}\n"
+
+                f"🎯 Target: {a[3]}\n"
+
+                f"📈 Direction: {a[4]}\n\n"
+
+            )
+
+
+
+        await update.message.reply_text(msg)
 
 
 
@@ -697,9 +644,11 @@ async def menu_handler(
 
 
 
-# ==========================
-# REMOVE ALERT MENU
-# ==========================
+
+
+    # ==========================
+    # REMOVE ALERT MENU
+    # ==========================
 
 
     elif text == "🗑 Remove Alert":
@@ -707,6 +656,7 @@ async def menu_handler(
 
 
         alerts = get_user_alerts(user_id)
+
 
 
 
@@ -732,6 +682,7 @@ async def menu_handler(
 
 
 
+
         for alert in alerts:
 
 
@@ -744,13 +695,15 @@ async def menu_handler(
 
                         f"{alert[2]} | {alert[3]} | {alert[4]}",
 
-                        callback_data=f"remove_{alert[0]}"
+                        callback_data=f"select_{alert[0]}"
 
                     )
 
                 ]
 
             )
+
+
 
 
 
@@ -776,7 +729,9 @@ async def menu_handler(
 
 
 
+
         context.user_data["delete_list"] = []
+
 
 
 
@@ -786,7 +741,7 @@ async def menu_handler(
 
             "🗑 Select alerts to remove:\n\n"
 
-            "Tap alerts and then press Delete Selected",
+            "Tap alerts first, then press Delete Selected",
 
             reply_markup=InlineKeyboardMarkup(buttons)
 
@@ -800,9 +755,9 @@ async def menu_handler(
 
 
 
-# ==========================
-# BROKER SETTINGS
-# ==========================
+    # ==========================
+    # BROKER SETTINGS
+    # ==========================
 
 
     elif text == "🏦 Broker Settings":
@@ -826,9 +781,9 @@ async def menu_handler(
 
 
 
-# ==========================
-# STATUS
-# ==========================
+    # ==========================
+    # STATUS
+    # ==========================
 
 
     elif text == "ℹ️ Status":
@@ -876,9 +831,9 @@ async def menu_handler(
 
 
 
-# ==========================
-# CUSTOM SYMBOL VALIDATION
-# ==========================
+    # ==========================
+    # CUSTOM SYMBOL VALIDATION
+    # ==========================
 
 
     elif context.user_data.get("custom_symbol"):
@@ -932,6 +887,7 @@ async def menu_handler(
 
 
 
+
             context.user_data.pop(
 
                 "custom_symbol"
@@ -940,8 +896,8 @@ async def menu_handler(
 
 
 
-            context.user_data["symbol"] = symbol
 
+            context.user_data["symbol"] = symbol
 
 
 
@@ -967,25 +923,14 @@ async def menu_handler(
 
             )
 
-
-
-
-
-
-
-
-
 # ==========================
-# REMOVE CALLBACK
+# INLINE DELETE CALLBACK
 # ==========================
 
 
 async def delete_callback(
-
     update: Update,
-
     context: ContextTypes.DEFAULT_TYPE
-
 ):
 
 
@@ -1003,7 +948,13 @@ async def delete_callback(
 
 
 
-    if data.startswith("remove_"):
+    # ==========================
+    # SELECT / UNSELECT ALERT
+    # ==========================
+
+
+    if data.startswith("select_"):
+
 
 
         alert_id = int(
@@ -1024,6 +975,9 @@ async def delete_callback(
 
 
 
+
+
+
         if alert_id in delete_list:
 
 
@@ -1038,7 +992,30 @@ async def delete_callback(
 
 
 
+
+
+
         context.user_data["delete_list"] = delete_list
+
+
+
+
+
+        selected = (
+
+            "\n".join(
+
+                str(x)
+
+                for x in delete_list
+
+            )
+
+            if delete_list
+
+            else "None"
+
+        )
 
 
 
@@ -1049,19 +1026,9 @@ async def delete_callback(
 
             "🗑 Selected Alert IDs:\n\n"
 
-            +
+            f"{selected}\n\n"
 
-            "\n".join(
-
-                str(x)
-
-                for x in delete_list
-
-            )
-
-            +
-
-            "\n\nPress Delete Selected."
+            "Press Delete Selected."
 
         )
 
@@ -1071,8 +1038,13 @@ async def delete_callback(
 
 
 
+    # ==========================
+    # DELETE SELECTED
+    # ==========================
+
 
     elif data == "delete_selected":
+
 
 
         delete_list = context.user_data.get(
@@ -1085,7 +1057,11 @@ async def delete_callback(
 
 
 
+
+
+
         if not delete_list:
+
 
 
             await query.edit_message_text(
@@ -1113,125 +1089,85 @@ async def delete_callback(
 
 
 
+
+
+
         await query.edit_message_text(
 
             "✅ Selected alerts removed."
 
         )
 
+
+
+
+
+
+
+
+
 # ==========================
 # SAVE ALERT
 # ==========================
 
 
-    elif "symbol" in context.user_data:
+async def save_alert(
 
+    update,
 
-        try:
+    context
 
+):
 
 
-            target = float(text)
+    user_id = update.message.from_user.id
 
 
 
-            symbol = context.user_data["symbol"]
+    try:
 
 
+        target = float(
 
+            update.message.text
 
+        )
 
-            # ======================
-            # GET CURRENT PRICE
-            # ======================
 
 
-            if symbol.endswith("USDT"):
+        symbol = context.user_data["symbol"]
 
 
 
-                data = get_crypto_price(symbol)
 
 
 
-                current_price = float(
+        # GET CURRENT PRICE
 
-                    data["price"]
 
-                )
+        if symbol.endswith("USDT"):
 
 
+            data = get_crypto_price(symbol)
 
-            else:
 
+            current_price = float(
 
+                data["price"]
 
-                data = get_price(symbol)
+            )
 
 
 
-                current_price = float(
+        else:
 
-                    data["bid"]
 
-                )
+            data = get_price(symbol)
 
 
+            current_price = float(
 
-
-
-
-
-
-            # ======================
-            # AUTO DIRECTION SYSTEM
-            # ======================
-
-
-            # Example:
-            #
-            # Current = 80
-            # Target = 70
-            #
-            # Price must go DOWN
-            #
-
-
-            if current_price > target:
-
-
-                direction = "BELOW"
-
-
-
-
-            else:
-
-
-                direction = "ABOVE"
-
-
-
-
-
-
-
-
-
-            # ======================
-            # SAVE DATABASE
-            # ======================
-
-
-            add_alert(
-
-                user_id,
-
-                symbol,
-
-                target,
-
-                direction
+                data["bid"]
 
             )
 
@@ -1241,41 +1177,80 @@ async def delete_callback(
 
 
 
-            await update.message.reply_text(
+        # AUTO DIRECTION
 
-                "✅ Alert Saved\n\n"
 
-                f"Symbol: {symbol}\n"
+        if current_price > target:
 
-                f"Current Price: {current_price}\n"
 
-                f"Target: {target}\n"
-
-                f"Direction: {direction}\n\n"
-
-                "🚀 Monitoring Started"
-
-            )
+            direction = "BELOW"
 
 
 
+        else:
 
 
-            context.user_data.clear()
+            direction = "ABOVE"
 
 
 
 
 
-        except Exception as e:
+
+
+        add_alert(
+
+            user_id,
+
+            symbol,
+
+            target,
+
+            direction
+
+        )
 
 
 
-            await update.message.reply_text(
 
-                f"❌ Error creating alert\n\n{e}"
 
-            )
+
+        await update.message.reply_text(
+
+            "✅ Alert Saved\n\n"
+
+            f"📊 Symbol: {symbol}\n"
+
+            f"💵 Current: {current_price}\n"
+
+            f"🎯 Target: {target}\n"
+
+            f"📈 Direction: {direction}\n\n"
+
+            "🚀 Monitoring Started"
+
+        )
+
+
+
+
+
+
+        context.user_data.clear()
+
+
+
+
+
+    except Exception as e:
+
+
+
+        await update.message.reply_text(
+
+            f"❌ Error creating alert\n\n{e}"
+
+        )
 
 
 
@@ -1356,31 +1331,8 @@ def main():
 
 
 
-    print(
-
-        "STEP 2",
-
-        flush=True
-
-    )
-
-
-
-
 
     init_db()
-
-
-
-
-
-    print(
-
-        "STEP 3",
-
-        flush=True
-
-    )
 
 
 
@@ -1405,25 +1357,6 @@ def main():
 
 
 
-
-    print(
-
-        "STEP 4",
-
-        flush=True
-
-    )
-
-
-
-
-
-
-
-
-    # COMMANDS
-
-
     app.add_handler(
 
         CommandHandler(
@@ -1439,12 +1372,6 @@ def main():
 
 
 
-
-
-
-
-
-    # NORMAL TEXT
 
 
     app.add_handler(
@@ -1465,11 +1392,6 @@ def main():
 
 
 
-
-
-    # INLINE BUTTON CALLBACKS
-
-
     app.add_handler(
 
         CallbackQueryHandler(
@@ -1485,7 +1407,6 @@ def main():
 
 
 
-
     print(
 
         "🚀 Bot Started",
@@ -1493,7 +1414,6 @@ def main():
         flush=True
 
     )
-
 
 
 
