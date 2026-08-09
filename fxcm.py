@@ -5,166 +5,26 @@ import requests
 FXCM_USERNAME = os.getenv("FXCM_USERNAME")
 FXCM_PASSWORD = os.getenv("FXCM_PASSWORD")
 
-# Working FXCM endpoint
-FXCM_BASE = "https://endpoints-demo.fxcm.com"
 
-
-session = requests.Session()
-
-ACCESS_TOKEN = None
-
+BASE_URL = "https://api-demo.fxcm.com"
 
 
 def fxcm_login():
 
-    global ACCESS_TOKEN
+    session = requests.Session()
 
+    # FXCM authentication
+    response = session.post(
 
-    # Step 1: Get trading system
+        f"{BASE_URL}/trading/open_session",
 
-    response = session.get(
+        data={
 
-        f"{FXCM_BASE}/iam/trading-systems/{FXCM_USERNAME}",
+            "username": FXCM_USERNAME,
 
-        headers={
-            "X-COOKIE-DOMAIN": "fxcm.com"
-        },
-
-        timeout=20
-    )
-
-
-    response.raise_for_status()
-
-
-    systems = response.json()
-
-
-    if not systems:
-        raise Exception(
-            "No FXCM trading system found"
-        )
-
-
-    trading_session_id = systems[0]["tradingSessionId"]
-
-    trading_session_sub_id = systems[0]["tradingSessionSubId"]
-
-
-
-    # Step 2: Get XSRF token
-
-    xsrf_token = session.cookies.get(
-        "XSRF-TOKEN"
-    )
-
-
-    if not xsrf_token:
-
-        raise Exception(
-            "FXCM XSRF token missing"
-        )
-
-
-
-    # Step 3: Authenticate
-
-    auth_response = session.post(
-
-        f"{FXCM_BASE}/iam/authenticate",
-
-        json={
-
-            "loginId": FXCM_USERNAME,
-
-            "password": FXCM_PASSWORD,
-
-            "tradingSessionId": trading_session_id,
-
-            "tradingSessionSubId": trading_session_sub_id,
-
-            "appName": "TelegramTradingAlertBot"
+            "password": FXCM_PASSWORD
 
         },
-
-
-        headers={
-
-            "X-COOKIE-DOMAIN": "fxcm.com",
-
-            "X-XSRF-TOKEN": xsrf_token
-
-        },
-
-
-        timeout=20
-
-    )
-
-
-    auth_response.raise_for_status()
-
-
-    data = auth_response.json()
-
-
-    ACCESS_TOKEN = data.get(
-        "accessToken"
-    )
-
-
-    if not ACCESS_TOKEN:
-
-        raise Exception(
-            "FXCM access token not received"
-        )
-
-
-    return ACCESS_TOKEN
-
-
-
-
-
-def get_price(symbol="EURUSD"):
-
-    global ACCESS_TOKEN
-
-
-    if ACCESS_TOKEN is None:
-
-        fxcm_login()
-
-
-
-    headers = {
-
-        "Authorization":
-            f"Bearer {ACCESS_TOKEN}",
-
-        "Accept":
-            "application/json"
-
-    }
-
-
-
-    # Get market prices
-
-    response = session.get(
-
-        f"{FXCM_BASE}/trading/get_model",
-
-        params={
-
-            "models":
-                "Offer"
-
-        },
-
-
-        headers=headers,
-
 
         timeout=20
 
@@ -177,12 +37,65 @@ def get_price(symbol="EURUSD"):
     data = response.json()
 
 
+    token = data.get("access_token")
 
-    offers = data.get(
-        "Offer",
-        []
+
+    if not token:
+
+        raise Exception(
+            "FXCM token missing"
+        )
+
+
+    return token
+
+
+
+
+
+def get_price(symbol="EURUSD"):
+
+
+    token = fxcm_login()
+
+
+    headers = {
+
+        "Authorization":
+            f"Bearer {token}"
+
+    }
+
+
+
+    response = requests.get(
+
+        f"{BASE_URL}/trading/get_model",
+
+        headers=headers,
+
+        params={
+
+            "models":
+                "Offer"
+
+        },
+
+        timeout=20
+
     )
 
+
+    response.raise_for_status()
+
+
+    data = response.json()
+
+
+    offers = data.get(
+        "offers",
+        []
+    )
 
 
     for offer in offers:
@@ -199,36 +112,11 @@ def get_price(symbol="EURUSD"):
                     offer.get("sell"),
 
                 "ask":
-                    offer.get("buy"),
-
-                "spread":
-                    offer.get("spread"),
-
-                "time":
-                    offer.get("time")
+                    offer.get("buy")
 
             }
 
 
-
     raise Exception(
-        f"{symbol} price not found"
+        f"{symbol} not found"
     )
-
-
-
-
-
-def test_connection():
-
-    token = fxcm_login()
-
-
-    return {
-
-        "connected": True,
-
-        "token":
-            token[:10] + "..."
-
-    }
