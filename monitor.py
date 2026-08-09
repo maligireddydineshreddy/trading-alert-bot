@@ -1,6 +1,7 @@
 import asyncio
 
 from fxcm import get_price
+from crypto import get_crypto_price
 
 from database import (
     get_active_alerts,
@@ -28,6 +29,33 @@ async def send_alert(user_id, message):
 
 
 
+def get_current_price(symbol):
+
+    crypto_symbols = [
+        "BTCUSDT",
+        "ETHUSDT"
+    ]
+
+
+    if symbol in crypto_symbols:
+
+        data = get_crypto_price(symbol)
+
+        return float(
+            data["price"]
+        )
+
+
+    else:
+
+        data = get_price(symbol)
+
+        return float(
+            data["bid"]
+        )
+
+
+
 async def check_alerts():
 
     alerts = get_active_alerts()
@@ -43,10 +71,12 @@ async def check_alerts():
 
         try:
 
-            price = get_price(symbol)
+            current = get_current_price(symbol)
 
-            current = float(
-                price["bid"]
+
+            print(
+                f"{symbol} | {current} | Target {target}",
+                flush=True
             )
 
 
@@ -54,12 +84,13 @@ async def check_alerts():
 
 
                 await send_alert(
+
                     user_id,
 
                     f"""
 🚨 PRICE ALERT HIT
 
-Pair:
+Symbol:
 {symbol}
 
 Target:
@@ -68,6 +99,7 @@ Target:
 Current:
 {current}
 """
+
                 )
 
 
@@ -82,6 +114,7 @@ Current:
                 e,
                 flush=True
             )
+
 
 
 
