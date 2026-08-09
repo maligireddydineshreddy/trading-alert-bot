@@ -16,11 +16,6 @@ def get_price(symbol):
     login = os.getenv("FXCM_USERNAME")
     password = os.getenv("FXCM_PASSWORD")
 
-    if not login or not password:
-        raise Exception(
-            "FXCM credentials missing"
-        )
-
     fx = ForexConnect()
 
     try:
@@ -32,11 +27,9 @@ def get_price(symbol):
             "Demo"
         )
 
-
         offers = fx.get_table(
-            fxcorepy.O2GTableType.Offers
+            fxcorepy.O2GTableType.OFFERS
         )
-
 
         for row in offers:
 
@@ -49,10 +42,9 @@ def get_price(symbol):
 
 
         raise Exception(
-            f"Symbol {symbol} not found"
+            f"{symbol} not found"
         )
 
 
     finally:
-
         fx.logout()
