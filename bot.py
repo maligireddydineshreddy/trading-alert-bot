@@ -61,6 +61,7 @@ main_menu = [
 
 
 
+
 market_menu = [
 
     ["💱 Forex", "🪙 Crypto"],
@@ -71,18 +72,33 @@ market_menu = [
 
 
 
+
+
+# ==========================
+# FOREX MENU
+# ==========================
+
+
 forex_menu = [
 
     ["EURUSD", "GBPUSD"],
 
     ["USDJPY", "GBPJPY"],
 
-    ["✏️ Enter Pair"],
+    ["✏️ Enter Forex Pair"],
 
     ["⬅️ Back"]
 
 ]
 
+
+
+
+
+
+# ==========================
+# CRYPTO MENU
+# ==========================
 
 
 crypto_menu = [
@@ -91,7 +107,7 @@ crypto_menu = [
 
     ["SOLUSDT", "XRPUSDT"],
 
-    ["✍️ Enter Pair"],
+    ["✍️ Enter Crypto Pair"],
 
     ["⬅️ Back"]
 
@@ -101,12 +117,39 @@ crypto_menu = [
 
 
 
+
 # ==========================
-# START
+# COMMODITY MENU
 # ==========================
 
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+commodity_menu = [
+
+    ["XAUUSD", "XAGUSD"],
+
+    ["USOIL", "COPPER"],
+
+    ["✍️ Enter Commodity"],
+
+    ["⬅️ Back"]
+
+]
+
+
+
+
+
+
+
+# ==========================
+# START COMMAND
+# ==========================
+
+
+async def start(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
 
 
     await update.message.reply_text(
@@ -123,16 +166,15 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     )
 
-
-
-
-
 # ==========================
 # MENU HANDLER
 # ==========================
 
 
-async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def menu_handler(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
 
 
     text = update.message.text
@@ -141,7 +183,12 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 
+
+
+    # ==========================
     # ADD ALERT
+    # ==========================
+
 
     if text == "📈 Add Alert":
 
@@ -162,7 +209,11 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 
+
+    # ==========================
     # FOREX
+    # ==========================
+
 
     elif text == "💱 Forex":
 
@@ -173,7 +224,7 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
 
             "💱 Select Forex Pair\n\n"
-            "Or enter any FXCM pair manually",
+            "Or enter FXCM pair manually",
 
             reply_markup=ReplyKeyboardMarkup(
 
@@ -187,7 +238,12 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 
+
+
+    # ==========================
     # CRYPTO
+    # ==========================
+
 
     elif text == "🪙 Crypto":
 
@@ -212,13 +268,53 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 
-    # ENTER CUSTOM PAIR
+
+
+
+    # ==========================
+    # COMMODITIES
+    # ==========================
+
+
+    elif text == "🥇 Commodities":
+
+
+        context.user_data["market"] = "commodity"
+
+
+        await update.message.reply_text(
+
+            "🥇 Select Commodity\n\n"
+            "Or enter FXCM symbol manually",
+
+            reply_markup=ReplyKeyboardMarkup(
+
+                commodity_menu,
+
+                resize_keyboard=True
+
+            )
+
+        )
+
+
+
+
+
+
+
+    # ==========================
+    # MANUAL INPUT BUTTONS
+    # ==========================
+
 
     elif text in [
 
-        "✏️ Enter Pair",
+        "✏️ Enter Forex Pair",
 
-        "✍️ Enter Pair"
+        "✍️ Enter Crypto Pair",
+
+        "✍️ Enter Commodity"
 
     ]:
 
@@ -226,31 +322,17 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["custom_symbol"] = True
 
 
-        market = context.user_data.get(
-            "market"
-        )
+
+        if text == "✏️ Enter Forex Pair":
 
 
-        if market == "crypto":
-
-
-            await update.message.reply_text(
-
-                "✍️ Enter Crypto symbol\n\n"
-                "Examples:\n"
-                "BNBUSDT\n"
-                "DOGEUSDT\n"
-                "ADAUSDT"
-
-            )
-
-
-        else:
+            context.user_data["market"] = "forex"
 
 
             await update.message.reply_text(
 
-                "✏️ Enter Forex symbol\n\n"
+                "✏️ Enter Forex Pair\n\n"
+
                 "Examples:\n"
                 "AUDUSD\n"
                 "AUD/USD\n"
@@ -260,19 +342,76 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 
+        elif text == "✍️ Enter Crypto Pair":
+
+
+            context.user_data["market"] = "crypto"
+
+
+            await update.message.reply_text(
+
+                "🪙 Enter Crypto Pair\n\n"
+
+                "Examples:\n"
+                "BNBUSDT\n"
+                "DOGEUSDT\n"
+                "ADAUSDT"
+
+            )
+
+
+
+        else:
+
+
+            context.user_data["market"] = "commodity"
+
+
+            await update.message.reply_text(
+
+                "🥇 Enter Commodity Symbol\n\n"
+
+                "Examples:\n"
+                "XAUUSD\n"
+                "XAGUSD\n"
+                "NATGAS"
+
+            )
+
+
+
+
+
+
+    # ==========================
     # HOT BUTTON SYMBOLS
+    # ==========================
+
 
     elif text in [
+
+        # Forex
 
         "EURUSD",
         "GBPUSD",
         "USDJPY",
         "GBPJPY",
 
+
+        # Crypto
+
         "BTCUSDT",
         "ETHUSDT",
         "SOLUSDT",
-        "XRPUSDT"
+        "XRPUSDT",
+
+
+        # Commodities
+
+        "XAUUSD",
+        "XAGUSD",
+        "USOIL",
+        "COPPER"
 
     ]:
 
@@ -280,14 +419,19 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["symbol"] = text
 
 
+
         await update.message.reply_text(
 
             f"📊 {text} Selected\n\n"
+
             "Enter target price:"
 
         )
 
-    # BACK
+    # ==========================
+    # BACK BUTTON
+    # ==========================
+
 
     elif text == "⬅️ Back":
 
@@ -308,7 +452,12 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 
+
+
+    # ==========================
     # MY ALERTS
+    # ==========================
+
 
     elif text == "📋 My Alerts":
 
@@ -352,7 +501,13 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 
+
+
+
+    # ==========================
     # REMOVE ALERT
+    # ==========================
+
 
     elif text == "🗑 Remove Alert":
 
@@ -369,7 +524,12 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 
+
+
+    # ==========================
     # BROKER SETTINGS
+    # ==========================
+
 
     elif text == "🏦 Broker Settings":
 
@@ -387,7 +547,12 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 
+
+
+    # ==========================
     # STATUS
+    # ==========================
+
 
     elif text == "ℹ️ Status":
 
@@ -416,6 +581,7 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
 
 
+
         except Exception as e:
 
 
@@ -429,7 +595,11 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 
+
+    # ==========================
     # CUSTOM SYMBOL VALIDATION
+    # ==========================
+
 
     elif context.user_data.get("custom_symbol"):
 
@@ -437,13 +607,13 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         symbol = text.upper().replace("/", "")
 
 
+        market = context.user_data.get(
+            "market"
+        )
+
+
+
         try:
-
-
-            market = context.user_data.get(
-                "market"
-            )
-
 
 
             if market == "crypto":
@@ -456,6 +626,8 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             else:
 
 
+                # Forex + Commodity both use FXCM
+
                 valid = validate_symbol(symbol)
 
 
@@ -467,13 +639,16 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                 await update.message.reply_text(
 
-                    "❌ Invalid symbol\n\n"
+                    "❌ Invalid Symbol\n\n"
 
-                    "Pair is not available."
+                    "This symbol is not available."
 
                 )
 
+
                 return
+
+
 
 
 
@@ -483,6 +658,7 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 "custom_symbol"
 
             )
+
 
 
             context.user_data["symbol"] = symbol
@@ -504,7 +680,7 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             await update.message.reply_text(
 
-                f"❌ Symbol check failed\n\n{e}"
+                f"❌ Validation Error\n\n{e}"
 
             )
 
@@ -512,7 +688,11 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 
-    # REMOVE ALERT PROCESS
+
+    # ==========================
+    # REMOVE PROCESS
+    # ==========================
+
 
     elif context.user_data.get("remove"):
 
@@ -552,7 +732,12 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 
+
+
+    # ==========================
     # SAVE ALERT
+    # ==========================
+
 
     elif "symbol" in context.user_data:
 
@@ -580,7 +765,7 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                 "✅ Alert Saved\n\n"
 
-                f"Pair: {context.user_data['symbol']}\n"
+                f"Symbol: {context.user_data['symbol']}\n"
 
                 f"Target: {price}\n\n"
 
@@ -608,7 +793,6 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 
-
 # ==========================
 # START MONITOR
 # ==========================
@@ -626,11 +810,13 @@ async def start_monitor(app):
     )
 
 
+
     monitor.set_bot(
 
         app.bot
 
     )
+
 
 
     asyncio.create_task(
