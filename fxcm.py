@@ -8,10 +8,6 @@ FXCM_USERNAME = os.getenv("FXCM_USERNAME")
 FXCM_PASSWORD = os.getenv("FXCM_PASSWORD")
 
 
-# ==================================
-# CREATE AUTHENTICATED FXCM SESSION
-# ==================================
-
 def create_session():
 
     session = requests.Session()
@@ -19,46 +15,28 @@ def create_session():
 
     # Get trading system
 
-    system_response = session.get(
-
+    r = session.get(
         f"{FXCM_ENDPOINT}/iam/trading-systems/{FXCM_USERNAME}",
-
         headers={
             "X-COOKIE-DOMAIN": "fxcm.com"
         },
-
         timeout=20
     )
 
+    r.raise_for_status()
 
-    system_response.raise_for_status()
 
-
-    system = system_response.json()[0]
+    system = r.json()[0]
 
 
     trading_session_id = system["tradingSessionId"]
-
     trading_session_sub_id = system["tradingSessionSubId"]
 
 
-
-    xsrf = session.cookies.get(
-        "XSRF-TOKEN"
-    )
+    xsrf = session.cookies.get("XSRF-TOKEN")
 
 
-    if not xsrf:
-
-        raise Exception(
-            "FXCM XSRF token missing"
-        )
-
-
-
-    # Login
-
-    login_response = session.post(
+    login = session.post(
 
         f"{FXCM_ENDPOINT}/iam/authenticate",
 
@@ -76,31 +54,25 @@ def create_session():
 
         },
 
-
         headers={
 
-            "X-COOKIE-DOMAIN": "fxcm.com",
+            "X-COOKIE-DOMAIN":"fxcm.com",
 
-            "X-XSRF-TOKEN": xsrf
+            "X-XSRF-TOKEN":xsrf
 
         },
 
-
         timeout=20
+
     )
 
 
-    login_response.raise_for_status()
-
+    login.raise_for_status()
 
 
     return session
 
 
-
-# ==================================
-# GET FXCM PRICE
-# ==================================
 
 def get_price(symbol="EUR/USD"):
 
@@ -108,88 +80,47 @@ def get_price(symbol="EUR/USD"):
     session = create_session()
 
 
+    # FXCM new quote endpoint
 
-    response = session.get(
-
-        f"{FXCM_ENDPOINT}/trading/get_model",
-
-        params={
-
-            "models": "Offer"
-
-        },
+    url = f"{FXCM_ENDPOINT}/marketdata/quotes"
 
 
-        headers={
+    params = {
 
-            "X-COOKIE-DOMAIN": "fxcm.com"
+        "symbols": symbol
 
-        },
+    }
 
+
+    r = session.get(
+
+        url,
+
+        params=params,
 
         timeout=20
 
     )
 
 
-    print(
-        "FXCM STATUS:",
-        response.status_code
-    )
+    print("STATUS:",r.status_code)
+
+    print(r.text[:500])
 
 
-    if response.status_code != 200:
-
-        print(
-            response.text
-        )
+    r.raise_for_status()
 
 
-    response.raise_for_status()
+    data=r.json()
 
 
-
-    data = response.json()
-
+    quote=data["quotes"][0]
 
 
-    offers = data.get(
-        "offers",
-        []
-    )
+    return {
 
+        "bid": quote["bid"],
 
+        "ask": quote["ask"]
 
-    for offer in offers:
-
-
-        if offer.get("currency") == symbol:
-
-
-            return {
-
-                "bid": offer.get("sell"),
-
-                "ask": offer.get("buy")
-
-            }
-
-
-
-    raise Exception(
-
-        f"{symbol} price not found"
-
-    )
-
-
-
-# ==================================
-# CONNECTION TEST
-# ==================================
-
-def test_connection():
-
-    session = create_session()
-
-    return True
+    }
