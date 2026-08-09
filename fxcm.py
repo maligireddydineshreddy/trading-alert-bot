@@ -2,60 +2,128 @@ import os
 import requests
 
 
-FXCM_BASE = "https://api-demo.fxcm.com"
+FXCM_BASE = "https://endpoints-demo.fxcm.com"
+FXCM_API = "https://api-demo.fxcm.com"
 
 
-FXCM_TOKEN = os.getenv("FXCM_TOKEN")
+USERNAME = os.getenv("FXCM_USERNAME")
+PASSWORD = os.getenv("FXCM_PASSWORD")
 
 
-def get_price(symbol="EUR/USD"):
+def login():
 
-    if not FXCM_TOKEN:
+    session = requests.Session()
+
+
+    r = session.get(
+        f"{FXCM_BASE}/iam/trading-systems/{USERNAME}",
+        headers={
+            "X-COOKIE-DOMAIN": "fxcm.com"
+        },
+        timeout=20
+    )
+
+    r.raise_for_status()
+
+
+    systems = r.json()
+
+
+    if not systems:
         raise Exception(
-            "FXCM_TOKEN missing in Railway variables"
+            "No FXCM account found"
         )
 
 
-    headers = {
-        "Authorization": f"Bearer {FXCM_TOKEN}",
-        "Accept": "application/json"
-    }
+    tsid = systems[0]["tradingSessionId"]
+    tssid = systems[0]["tradingSessionSubId"]
 
 
-    url = (
-        f"{FXCM_BASE}/trading/get_model"
+    xsrf = session.cookies.get(
+        "XSRF-TOKEN"
     )
 
 
-    response = requests.get(
+    auth = session.post(
 
-        url,
+        f"{FXCM_BASE}/iam/authenticate",
 
-        headers=headers,
+        json={
 
-        params={
-            "models": "Offer"
+            "loginId": USERNAME,
+
+            "password": PASSWORD,
+
+            "tradingSessionId": tsid,
+
+            "tradingSessionSubId": tssid,
+
+            "appName": "TradingAlertBot"
+
+        },
+
+        headers={
+
+            "X-COOKIE-DOMAIN": "fxcm.com",
+
+            "X-XSRF-TOKEN": xsrf
+
         },
 
         timeout=20
     )
 
 
-    response.raise_for_status()
+    auth.raise_for_status()
 
 
-    data = response.json()
+    token = auth.json()["accessToken"]
 
 
-    offers = data.get(
-        "offers",
-        []
+    return token
+
+
+
+def get_price(symbol="EUR/USD"):
+
+
+    token = login()
+
+
+    headers = {
+
+        "Authorization": f"Bearer {token}",
+
+        "Accept": "application/json"
+
+    }
+
+
+    r = requests.get(
+
+        f"{FXCM_API}/trading/get_model",
+
+        headers=headers,
+
+        params={
+            "models":"Offer"
+        },
+
+        timeout=20
     )
 
 
-    for offer in offers:
+    r.raise_for_status()
+
+
+    data = r.json()
+
+
+    for offer in data.get("offers", []):
+
 
         if offer.get("currency") == symbol:
+
 
             return {
 
@@ -69,5 +137,5 @@ def get_price(symbol="EUR/USD"):
 
 
     raise Exception(
-        f"{symbol} price not found"
+        "Symbol not available"
     )
