@@ -10,7 +10,6 @@ FXCM_USERNAME = os.getenv("FXCM_USERNAME")
 FXCM_PASSWORD = os.getenv("FXCM_PASSWORD")
 
 FXCM_BASE = "https://endpoints-demo.fxcm.com"
-FXCM_MARKET = "https://api-demo.fxcm.com"
 
 
 main_menu = [
@@ -26,14 +25,15 @@ market_menu = [
 
 
 def fxcm_login():
-    """Login to FXCM and return session + access token."""
+    """
+    FXCM demo authentication test
+    """
 
     session = requests.Session()
 
-    url = f"{FXCM_BASE}/iam/trading-systems/{FXCM_USERNAME}"
-
+    # Get trading systems
     response = session.get(
-        url,
+        f"{FXCM_BASE}/iam/trading-systems/{FXCM_USERNAME}",
         headers={
             "X-COOKIE-DOMAIN": "fxcm.com"
         },
@@ -45,106 +45,53 @@ def fxcm_login():
     systems = response.json()
 
     if not systems:
-        raise RuntimeError("FXCM returned no trading session.")
+        raise Exception("No FXCM trading system found")
 
     trading_session_id = systems[0]["tradingSessionId"]
     trading_session_sub_id = systems[0]["tradingSessionSubId"]
 
-    xsrf_token = session.cookies.get("XSRF-TOKEN")
+    xsrf = session.cookies.get("XSRF-TOKEN")
 
-    if not xsrf_token:
-        raise RuntimeError("FXCM XSRF token was not returned.")
+    if not xsrf:
+        raise Exception("Missing FXCM security token")
 
-    auth_url = f"{FXCM_BASE}/iam/authenticate"
-
-    payload = {
-        "loginId": FXCM_USERNAME,
-        "password": FXCM_PASSWORD,
-        "tradingSessionId": trading_session_id,
-        "tradingSessionSubId": trading_session_sub_id,
-        "appName": "TelegramTradingAlertBot"
-    }
-
-    auth_response = session.post(
-        auth_url,
-        json=payload,
+    # Authenticate
+    auth = session.post(
+        f"{FXCM_BASE}/iam/authenticate",
+        json={
+            "loginId": FXCM_USERNAME,
+            "password": FXCM_PASSWORD,
+            "tradingSessionId": trading_session_id,
+            "tradingSessionSubId": trading_session_sub_id,
+            "appName": "TelegramTradingAlertBot"
+        },
         headers={
             "X-COOKIE-DOMAIN": "fxcm.com",
-            "X-XSRF-TOKEN": xsrf_token
+            "X-XSRF-TOKEN": xsrf
         },
         timeout=20
     )
 
-    auth_response.raise_for_status()
+    auth.raise_for_status()
 
-    auth_data = auth_response.json()
+    data = auth.json()
 
-    access_token = auth_data.get("accessToken")
+    token = data.get("accessToken")
 
-    if not access_token:
-        raise RuntimeError("FXCM did not return an access token.")
+    if not token:
+        raise Exception("No FXCM access token received")
 
-    return access_token
+    return token
 
 
-def get_fxcm_price(symbol="EUR/USD"):
-    """Get current FXCM Bid/Ask price."""
+def fxcm_test():
 
-    access_token = fxcm_login()
+    token = fxcm_login()
 
-    headers = {
-        "Authorization": f"Bearer {access_token}",
-        "Content-Type": "application/x-www-form-urlencoded",
-        "Accept": "application/json"
+    return {
+        "connected": True,
+        "token": token[:12] + "..."
     }
-
-    # Subscribe the symbol so it appears in FXCM's Offers table.
-    subscription_response = requests.post(
-        f"{FXCM_MARKET}/trading/update_subscriptions",
-        headers=headers,
-        data={
-            "symbol": symbol,
-            "visible": "true"
-        },
-        timeout=20
-    )
-
-    subscription_response.raise_for_status()
-
-    # Request current Offers snapshot.
-    response = requests.get(
-        f"{FXCM_MARKET}/trading/get_model",
-        headers=headers,
-        params={
-            "models": "Offer"
-        },
-        timeout=20
-    )
-
-    response.raise_for_status()
-
-    data = response.json()
-
-    offers = data.get("offers", [])
-
-    for offer in offers:
-
-        if offer.get("currency") == symbol:
-
-            bid = offer.get("sell")
-            ask = offer.get("buy")
-
-            return {
-                "symbol": symbol,
-                "bid": bid,
-                "ask": ask,
-                "spread": offer.get("spread"),
-                "time": offer.get("time")
-            }
-
-    raise RuntimeError(
-        f"{symbol} was not found in the FXCM Offers table."
-    )
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -158,12 +105,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def menu_handler(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE
-):
+async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     text = update.message.text
+
 
     if text == "📈 Add Alert":
 
@@ -175,6 +120,7 @@ async def menu_handler(
             )
         )
 
+
     elif text == "💱 Forex":
 
         await update.message.reply_text(
@@ -185,6 +131,7 @@ async def menu_handler(
             "GBPJPY"
         )
 
+
     elif text == "🪙 Crypto":
 
         await update.message.reply_text(
@@ -192,6 +139,7 @@ async def menu_handler(
             "BTCUSDT\n"
             "ETHUSDT"
         )
+
 
     elif text == "🥇 Commodities":
 
@@ -202,6 +150,7 @@ async def menu_handler(
             "USOIL"
         )
 
+
     elif text == "📊 Indices":
 
         await update.message.reply_text(
@@ -211,69 +160,71 @@ async def menu_handler(
             "SPX500"
         )
 
+
     elif text == "📋 My Alerts":
 
         await update.message.reply_text(
             "📋 No alerts yet."
         )
 
+
     elif text == "🏦 Broker Settings":
 
         await update.message.reply_text(
             "🏦 Broker Settings\n\n"
-            "FXCM: 🟢 Connected\n"
+            "FXCM Demo: 🟢 Connected\n"
             "Crypto: Binance\n"
         )
+
 
     elif text == "🗑 Remove Alert":
 
         await update.message.reply_text(
-            "🗑 Remove Alert\n\n"
-            "No alerts available."
+            "🗑 No alerts available."
         )
+
 
     elif text == "ℹ️ Status":
 
         try:
 
-            price = get_fxcm_price("EUR/USD")
+            result = fxcm_test()
 
             await update.message.reply_text(
                 "🟢 Server Online\n\n"
                 "🟢 FXCM credentials configured\n"
                 "🟢 FXCM API connected\n\n"
-                "📊 EUR/USD\n"
-                f"Bid: {price['bid']}\n"
-                f"Ask: {price['ask']}\n"
-                f"Spread: {price['spread']}"
+                "🔑 Authentication successful\n"
+                f"Token: {result['token']}"
             )
+
 
         except Exception as e:
 
             await update.message.reply_text(
                 "🟢 Server Online\n\n"
                 "🟢 FXCM credentials configured\n"
-                "🔴 FXCM price request failed\n\n"
-                f"Error: {str(e)}"
+                "🔴 FXCM connection failed\n\n"
+                f"{str(e)}"
             )
+
 
 
 def main():
 
     if not BOT_TOKEN:
-        raise RuntimeError("BOT_TOKEN is missing.")
-
-    if not FXCM_USERNAME:
-        raise RuntimeError("FXCM_USERNAME is missing.")
-
-    if not FXCM_PASSWORD:
-        raise RuntimeError("FXCM_PASSWORD is missing.")
+        raise Exception("Missing BOT_TOKEN")
 
     app = Application.builder().token(BOT_TOKEN).build()
 
+
     app.add_handler(
-        CommandHandler("start", start)
+        CommandHandler(
+            "start",
+            start
+        )
     )
+
 
     app.add_handler(
         MessageHandler(
@@ -282,9 +233,12 @@ def main():
         )
     )
 
+
     print("🚀 Bot started...")
 
+
     app.run_polling()
+
 
 
 if __name__ == "__main__":
