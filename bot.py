@@ -19,18 +19,11 @@ from database import (
 
 from fxcm import get_price
 
-from monitor import (
-    monitor_loop,
-    telegram_bot
-)
+import monitor
 
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
-
-# ==========================
-# MENUS
-# ==========================
 
 main_menu = [
     ["📈 Add Alert", "📋 My Alerts"],
@@ -52,16 +45,11 @@ forex_menu = [
 ]
 
 
-# ==========================
-# START
-# ==========================
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(
-
         "🚀 Universal Trading Alert Platform",
-
         reply_markup=ReplyKeyboardMarkup(
             main_menu,
             resize_keyboard=True
@@ -69,17 +57,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-# ==========================
-# HANDLER
-# ==========================
 
 async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     text = update.message.text
     user_id = update.message.from_user.id
 
-
-    # ADD ALERT
 
     if text == "📈 Add Alert":
 
@@ -92,8 +75,6 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
-    # FOREX
-
     elif text == "💱 Forex":
 
         await update.message.reply_text(
@@ -105,8 +86,6 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
-    # SYMBOL SELECT
-
     elif text in [
         "EURUSD",
         "GBPUSD",
@@ -116,14 +95,10 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         context.user_data["symbol"] = text
 
-
         await update.message.reply_text(
-            f"📊 {text} Selected\n\n"
-            "Enter target price:"
+            f"{text} selected\n\nEnter target price:"
         )
 
-
-    # BACK
 
     elif text == "⬅️ Back":
 
@@ -136,57 +111,19 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
-    # CRYPTO
-
-    elif text == "🪙 Crypto":
-
-        await update.message.reply_text(
-            "🪙 Crypto\n\nBTCUSDT\nETHUSDT"
-        )
-
-
-    # COMMODITIES
-
-    elif text == "🥇 Commodities":
-
-        await update.message.reply_text(
-            "🥇 Commodities\n\n"
-            "XAUUSD\n"
-            "XAGUSD\n"
-            "USOIL"
-        )
-
-
-    # INDICES
-
-    elif text == "📊 Indices":
-
-        await update.message.reply_text(
-            "📊 Indices\n\n"
-            "NAS100\n"
-            "US30\n"
-            "SPX500"
-        )
-
-
-    # MY ALERTS
-
     elif text == "📋 My Alerts":
 
         alerts = get_user_alerts(user_id)
 
-
         if not alerts:
 
             await update.message.reply_text(
-                "📋 No active alerts."
+                "No active alerts."
             )
-
 
         else:
 
-            msg = "📋 Your Alerts:\n\n"
-
+            msg="📋 Alerts\n\n"
 
             for a in alerts:
 
@@ -196,158 +133,93 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     f"Status: {a[4]}\n\n"
                 )
 
-
             await update.message.reply_text(msg)
 
 
 
-    # REMOVE
-
     elif text == "🗑 Remove Alert":
 
+        context.user_data["remove"]=True
+
         await update.message.reply_text(
-            "Send alert ID:"
+            "Send alert ID"
         )
 
-        context.user_data["remove"] = True
 
-
-
-    # BROKER
 
     elif text == "🏦 Broker Settings":
 
         await update.message.reply_text(
-            "🏦 Broker Settings\n\n"
-            "FXCM Demo 🟢 Connected\n"
-            "Binance 🟡 Pending"
+            "FXCM Demo 🟢\nBinance Pending 🟡"
         )
 
 
-
-    # STATUS
 
     elif text == "ℹ️ Status":
 
         try:
 
-            price = get_price(
-                "EURUSD"
-            )
-
+            price=get_price("EURUSD")
 
             await update.message.reply_text(
-
-                "🟢 Server Online\n\n"
-                "🟢 FXCM Connected\n\n"
+                f"🟢 Server Online\n\n"
+                f"FXCM Connected\n\n"
                 f"EURUSD\n"
                 f"Bid: {price['bid']}\n"
                 f"Ask: {price['ask']}"
-
             )
-
 
         except Exception as e:
 
             await update.message.reply_text(
-
-                "🔴 FXCM Error\n\n"
-                f"{e}"
-
+                f"FXCM Error\n{e}"
             )
 
 
-
-    # REMOVE CONFIRMATION
 
     elif context.user_data.get("remove"):
 
+        remove_alert(int(text))
 
-        try:
+        context.user_data.clear()
 
-            remove_alert(
-                int(text)
-            )
-
-
-            await update.message.reply_text(
-                "🗑 Alert removed."
-            )
+        await update.message.reply_text(
+            "🗑 Removed"
+        )
 
 
-            context.user_data.clear()
-
-
-        except:
-
-            await update.message.reply_text(
-                "❌ Invalid ID"
-            )
-
-
-
-    # SAVE ALERT
 
     elif "symbol" in context.user_data:
 
+        price=float(text)
 
-        try:
+        add_alert(
+            user_id,
+            context.user_data["symbol"],
+            price
+        )
 
-            price = float(text)
+        await update.message.reply_text(
+            "✅ Alert Saved"
+        )
 
-
-            add_alert(
-                user_id,
-                context.user_data["symbol"],
-                price
-            )
-
-
-            await update.message.reply_text(
-
-                "✅ Alert Saved\n\n"
-                f"Pair: {context.user_data['symbol']}\n"
-                f"Target: {price}\n\n"
-                "Monitoring started 🚀"
-
-            )
+        context.user_data.clear()
 
 
-            context.user_data.clear()
-
-
-        except:
-
-            await update.message.reply_text(
-                "❌ Enter valid price"
-            )
-
-
-
-# ==========================
-# START MONITOR
-# ==========================
 
 async def start_monitor(app):
 
-    global telegram_bot
-
-    telegram_bot = app.bot
+    monitor.telegram_bot = app.bot
 
     asyncio.create_task(
-        monitor_loop()
+        monitor.monitor_loop()
     )
 
 
 
-# ==========================
-# MAIN
-# ==========================
-
 def main():
 
     if not BOT_TOKEN:
-
         raise Exception(
             "BOT_TOKEN missing"
         )
@@ -356,12 +228,13 @@ def main():
     init_db()
 
 
-    app = Application.builder().token(
-        BOT_TOKEN
-    ).post_init(
-        start_monitor
-    ).build()
-
+    app = (
+        Application
+        .builder()
+        .token(BOT_TOKEN)
+        .post_init(start_monitor)
+        .build()
+    )
 
 
     app.add_handler(
@@ -380,15 +253,14 @@ def main():
     )
 
 
-    print(
-        "🚀 Bot started..."
+    print("🚀 Bot Started")
+
+
+    app.run_polling(
+        drop_pending_updates=True
     )
 
 
-    app.run_polling()
 
-
-
-if __name__ == "__main__":
-
+if __name__=="__main__":
     main()
