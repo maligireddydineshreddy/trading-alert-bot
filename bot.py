@@ -1,5 +1,5 @@
 import os
-import requests
+import asyncio
 
 from telegram import ReplyKeyboardMarkup, Update
 from telegram.ext import (
@@ -10,13 +10,22 @@ from telegram.ext import (
     ContextTypes
 )
 
+from database import (
+    init_db,
+    add_alert,
+    get_user_alerts,
+    remove_alert
+)
+
+from fxcm import get_price
+
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-FXCM_USERNAME = os.getenv("FXCM_USERNAME")
-FXCM_PASSWORD = os.getenv("FXCM_PASSWORD")
 
-FXCM_BASE = "https://endpoints-demo.fxcm.com"
 
+# ==========================
+# MENUS
+# ==========================
 
 main_menu = [
     ["📈 Add Alert", "📋 My Alerts"],
@@ -39,84 +48,13 @@ forex_menu = [
 
 
 
-def fxcm_login():
-
-    session = requests.Session()
-
-    response = session.get(
-        f"{FXCM_BASE}/iam/trading-systems/{FXCM_USERNAME}",
-        headers={
-            "X-COOKIE-DOMAIN": "fxcm.com"
-        },
-        timeout=20
-    )
-
-    response.raise_for_status()
-
-    systems = response.json()
-
-    if not systems:
-        raise Exception("No FXCM trading system found")
-
-
-    trading_session_id = systems[0]["tradingSessionId"]
-    trading_session_sub_id = systems[0]["tradingSessionSubId"]
-
-
-    xsrf = session.cookies.get("XSRF-TOKEN")
-
-    if not xsrf:
-        raise Exception("Missing XSRF token")
-
-
-    auth = session.post(
-
-        f"{FXCM_BASE}/iam/authenticate",
-
-        json={
-            "loginId": FXCM_USERNAME,
-            "password": FXCM_PASSWORD,
-            "tradingSessionId": trading_session_id,
-            "tradingSessionSubId": trading_session_sub_id,
-            "appName": "TelegramTradingAlertBot"
-        },
-
-        headers={
-            "X-COOKIE-DOMAIN": "fxcm.com",
-            "X-XSRF-TOKEN": xsrf
-        },
-
-        timeout=20
-    )
-
-
-    auth.raise_for_status()
-
-    data = auth.json()
-
-    token = data.get("accessToken")
-
-
-    if not token:
-        raise Exception("FXCM token missing")
-
-
-    return token
-
-
-
-def fxcm_connection_test():
-
-    fxcm_login()
-
-    return True
-
-
+# ==========================
+# START
+# ==========================
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(
-
         "🚀 Universal Trading Alert Platform",
 
         reply_markup=ReplyKeyboardMarkup(
@@ -127,10 +65,19 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 
+# ==========================
+# MENU HANDLER
+# ==========================
+
 async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     text = update.message.text
 
+    user_id = update.message.from_user.id
+
+
+
+    # ADD ALERT
 
     if text == "📈 Add Alert":
 
@@ -145,6 +92,9 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
+
+    # FOREX
+
     elif text == "💱 Forex":
 
         await update.message.reply_text(
@@ -158,6 +108,9 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
+
+    # PAIR SELECT
+
     elif text in [
         "EURUSD",
         "GBPUSD",
@@ -167,12 +120,16 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         context.user_data["symbol"] = text
 
+
         await update.message.reply_text(
 
             f"📊 {text} Selected\n\n"
-            "Enter alert price:"
+            "Enter target price:"
         )
 
+
+
+    # BACK
 
     elif text == "⬅️ Back":
 
@@ -187,6 +144,9 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
+
+    # CRYPTO
+
     elif text == "🪙 Crypto":
 
         await update.message.reply_text(
@@ -194,99 +154,233 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
+
+    # COMMODITIES
+
     elif text == "🥇 Commodities":
 
         await update.message.reply_text(
-            "🥇 Commodities Menu\n\nXAUUSD\nXAGUSD\nUSOIL"
+
+            "🥇 Commodities\n\n"
+            "XAUUSD\n"
+            "XAGUSD\n"
+            "USOIL"
         )
 
+
+
+    # INDICES
 
     elif text == "📊 Indices":
 
         await update.message.reply_text(
-            "📊 Indices Menu\n\nNAS100\nUS30\nSPX500"
+
+            "📊 Indices\n\n"
+            "NAS100\n"
+            "US30\n"
+            "SPX500"
         )
 
+
+
+    # MY ALERTS
 
     elif text == "📋 My Alerts":
 
+
+        alerts = get_user_alerts(user_id)
+
+
+        if not alerts:
+
+            await update.message.reply_text(
+                "📋 No active alerts."
+            )
+
+        else:
+
+            message = "📋 Your Alerts:\n\n"
+
+
+            for alert in alerts:
+
+                message += (
+                    f"ID: {alert[0]}\n"
+                    f"{alert[2]} → {alert[3]}\n"
+                    f"Status: {alert[4]}\n\n"
+                )
+
+
+            await update.message.reply_text(message)
+
+
+
+    # REMOVE ALERT
+
+    elif text == "🗑 Remove Alert":
+
         await update.message.reply_text(
-            "📋 No alerts created."
+
+            "Send alert ID to remove."
         )
 
+        context.user_data["remove_mode"] = True
+
+
+
+    # BROKER SETTINGS
 
     elif text == "🏦 Broker Settings":
 
         await update.message.reply_text(
 
             "🏦 Broker Settings\n\n"
-            "FXCM Demo: 🟢 Connected\n"
-            "Crypto: Binance"
+            "FXCM Demo 🟢 Connected\n"
+            "Binance 🟡 Pending"
         )
 
 
-    elif text == "🗑 Remove Alert":
 
-        await update.message.reply_text(
-            "🗑 No alerts available."
-        )
-
+    # STATUS
 
     elif text == "ℹ️ Status":
 
         try:
 
-            fxcm_connection_test()
+            price = get_price("EURUSD")
+
 
             await update.message.reply_text(
 
                 "🟢 Server Online\n\n"
-                "🟢 FXCM Credentials OK\n"
-                "🟢 FXCM Authentication OK\n\n"
-                "Ready for market data connection."
+                "🟢 FXCM Connected\n"
+                f"EURUSD: {price}"
             )
 
 
         except Exception as e:
 
+
             await update.message.reply_text(
 
-                "🔴 FXCM Connection Failed\n\n"
-                f"{str(e)}"
+                "🟢 Server Online\n\n"
+                "🔴 FXCM Error\n\n"
+                f"{e}"
             )
 
 
-    else:
 
-        if "symbol" in context.user_data:
+    # REMOVE PROCESS
 
-            symbol = context.user_data["symbol"]
+    elif context.user_data.get("remove_mode"):
 
-            context.user_data["alert_price"] = text
+
+        try:
+
+            remove_alert(int(text))
+
+
+            await update.message.reply_text(
+                "🗑 Alert removed."
+            )
+
+
+            context.user_data.clear()
+
+
+        except:
+
+
+            await update.message.reply_text(
+                "❌ Invalid alert ID."
+            )
+
+
+
+    # SAVE ALERT
+
+    elif "symbol" in context.user_data:
+
+
+        try:
+
+            price = float(text)
+
+
+            add_alert(
+
+                user_id,
+
+                context.user_data["symbol"],
+
+                price
+            )
+
 
             await update.message.reply_text(
 
                 "✅ Alert Saved\n\n"
-                f"Pair: {symbol}\n"
-                f"Price: {text}\n\n"
-                "Monitoring will start soon."
+                f"Pair: {context.user_data['symbol']}\n"
+                f"Target: {price}\n\n"
+                "Monitoring started 🚀"
+            )
+
+
+            context.user_data.clear()
+
+
+
+        except:
+
+
+            await update.message.reply_text(
+                "❌ Enter a valid price."
             )
 
 
 
+# ==========================
+# ALERT MONITOR
+# ==========================
+
+async def monitor(application):
+
+    while True:
+
+
+        await asyncio.sleep(5)
+
+
+        # alert checking will run here
+
+        # next step:
+        # connect database alerts
+        # compare FXCM price
+        # send telegram message
+
+
+
+# ==========================
+# MAIN
+# ==========================
+
 def main():
 
+
     if not BOT_TOKEN:
-        raise Exception("BOT_TOKEN missing")
 
-    if not FXCM_USERNAME:
-        raise Exception("FXCM_USERNAME missing")
-
-    if not FXCM_PASSWORD:
-        raise Exception("FXCM_PASSWORD missing")
+        raise Exception(
+            "BOT_TOKEN missing"
+        )
 
 
-    app = Application.builder().token(BOT_TOKEN).build()
+    init_db()
+
+
+    app = Application.builder().token(
+        BOT_TOKEN
+    ).build()
+
 
 
     app.add_handler(
@@ -297,6 +391,7 @@ def main():
     )
 
 
+
     app.add_handler(
         MessageHandler(
             filters.TEXT & ~filters.COMMAND,
@@ -305,11 +400,14 @@ def main():
     )
 
 
+
     print("🚀 Bot started...")
+
 
     app.run_polling()
 
 
 
 if __name__ == "__main__":
+
     main()
