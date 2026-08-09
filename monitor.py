@@ -2,6 +2,7 @@ import asyncio
 
 
 from fxcm import get_price
+
 from crypto import get_crypto_price
 
 
@@ -17,6 +18,12 @@ telegram_bot = None
 
 
 
+
+# ==========================
+# SET TELEGRAM BOT
+# ==========================
+
+
 def set_bot(bot):
 
     global telegram_bot
@@ -26,6 +33,12 @@ def set_bot(bot):
 
 
 
+
+
+
+# ==========================
+# SEND ALERT
+# ==========================
 
 
 async def send_alert(user_id, message):
@@ -141,7 +154,6 @@ async def check_alerts():
         try:
 
 
-
             current = get_current_price(symbol)
 
 
@@ -150,7 +162,7 @@ async def check_alerts():
 
             print(
 
-                f"{symbol} | Current: {current} | Target: {target} | {direction}",
+                f"{symbol} | Current: {current} | Target: {target} | Direction: {direction}",
 
                 flush=True
 
@@ -161,33 +173,40 @@ async def check_alerts():
 
 
 
-
-            # ==========================
-            # DIRECTION CHECK
-            # ==========================
-
+            # ======================
+            # DIRECTION LOGIC
+            # ======================
 
 
             hit = False
 
 
 
+
+
+            # Price moving upward
+
             if direction == "ABOVE":
 
 
                 if current >= target:
+
 
                     hit = True
 
 
 
 
+
+
+            # Price moving downward
 
             elif direction == "BELOW":
 
 
                 if current <= target:
 
+
                     hit = True
 
 
@@ -195,10 +214,9 @@ async def check_alerts():
 
 
 
-
-            # ==========================
-            # SEND ALERT
-            # ==========================
+            # ======================
+            # ALERT TRIGGER
+            # ======================
 
 
             if hit:
@@ -207,7 +225,6 @@ async def check_alerts():
 
                 await send_alert(
 
-
                     user_id,
 
 
@@ -215,20 +232,23 @@ async def check_alerts():
 🚨 PRICE ALERT HIT
 
 
-Symbol:
+📊 Symbol:
 {symbol}
 
 
-Direction:
+📍 Direction:
 {direction}
 
 
-Target:
+🎯 Target:
 {target}
 
 
-Current:
+💰 Current Price:
 {current}
+
+
+✅ Alert Completed
 
 """
 
@@ -243,15 +263,15 @@ Current:
 
 
 
+
+
         except Exception as e:
 
 
 
             print(
 
-                "Monitor error:",
-
-                e,
+                f"Monitor error for {symbol}: {e}",
 
                 flush=True
 
@@ -266,7 +286,7 @@ Current:
 
 
 # ==========================
-# MONITOR LOOP
+# MAIN MONITOR LOOP
 # ==========================
 
 
@@ -287,7 +307,27 @@ async def monitor_loop():
 
 
 
-        await check_alerts()
+        try:
+
+
+            await check_alerts()
+
+
+
+        except Exception as e:
+
+
+            print(
+
+                "Monitor loop error:",
+
+                e,
+
+                flush=True
+
+            )
+
+
 
 
 
