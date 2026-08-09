@@ -10,12 +10,10 @@ FXCM_PASSWORD = os.getenv("FXCM_PASSWORD")
 
 def create_session():
 
-    session = requests.Session()
+    s = requests.Session()
 
-
-    # Get trading system
-
-    r = session.get(
+    # get trading system
+    r = s.get(
         f"{FXCM_ENDPOINT}/iam/trading-systems/{FXCM_USERNAME}",
         headers={
             "X-COOKIE-DOMAIN": "fxcm.com"
@@ -25,102 +23,56 @@ def create_session():
 
     r.raise_for_status()
 
-
     system = r.json()[0]
 
+    xsrf = s.cookies.get("XSRF-TOKEN")
 
-    trading_session_id = system["tradingSessionId"]
-    trading_session_sub_id = system["tradingSessionSubId"]
-
-
-    xsrf = session.cookies.get("XSRF-TOKEN")
-
-
-    login = session.post(
-
+    # login
+    r = s.post(
         f"{FXCM_ENDPOINT}/iam/authenticate",
-
         json={
-
             "loginId": FXCM_USERNAME,
-
             "password": FXCM_PASSWORD,
-
-            "tradingSessionId": trading_session_id,
-
-            "tradingSessionSubId": trading_session_sub_id,
-
+            "tradingSessionId": system["tradingSessionId"],
+            "tradingSessionSubId": system["tradingSessionSubId"],
             "appName": "TelegramTradingAlertBot"
-
         },
-
         headers={
-
-            "X-COOKIE-DOMAIN":"fxcm.com",
-
-            "X-XSRF-TOKEN":xsrf
-
+            "X-COOKIE-DOMAIN": "fxcm.com",
+            "X-XSRF-TOKEN": xsrf
         },
-
         timeout=20
-
     )
 
+    r.raise_for_status()
 
-    login.raise_for_status()
+    token = r.json()["accessToken"]
 
+    s.headers.update({
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/json"
+    })
 
-    return session
+    return s
 
 
 
 def get_price(symbol="EUR/USD"):
 
+    s = create_session()
 
-    session = create_session()
-
-
-    # FXCM new quote endpoint
-
-    url = f"{FXCM_ENDPOINT}/marketdata/quotes"
-
-
-    params = {
-
-        "symbols": symbol
-
-    }
-
-
-    r = session.get(
-
-        url,
-
-        params=params,
-
-        timeout=20
-
+    url = (
+        f"{FXCM_ENDPOINT}"
+        f"/trading/marketdata/{symbol}"
     )
 
+    r = s.get(url, timeout=20)
 
-    print("STATUS:",r.status_code)
-
-    print(r.text[:500])
-
+    print("STATUS:", r.status_code)
+    print(r.text[:300])
 
     r.raise_for_status()
 
+    data = r.json()
 
-    data=r.json()
-
-
-    quote=data["quotes"][0]
-
-
-    return {
-
-        "bid": quote["bid"],
-
-        "ask": quote["ask"]
-
-    }
+    return data
