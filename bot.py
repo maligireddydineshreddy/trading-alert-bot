@@ -31,6 +31,11 @@ from fxcm import (
 )
 
 
+from crypto import (
+    validate_crypto
+)
+
+
 import monitor
 
 
@@ -94,12 +99,15 @@ crypto_menu = [
 
 
 
+
+
 # ==========================
 # START
 # ==========================
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
 
     await update.message.reply_text(
 
@@ -114,6 +122,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
     )
+
+
 
 
 
@@ -152,9 +162,12 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 
-    # FOREX MENU
+    # FOREX
 
     elif text == "💱 Forex":
+
+
+        context.user_data["market"] = "forex"
 
 
         await update.message.reply_text(
@@ -174,14 +187,18 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 
-    # CRYPTO MENU
+    # CRYPTO
 
     elif text == "🪙 Crypto":
 
 
+        context.user_data["market"] = "crypto"
+
+
         await update.message.reply_text(
 
-            "🪙 Select Crypto Pair",
+            "🪙 Select Crypto Pair\n\n"
+            "Or enter Binance pair manually",
 
             reply_markup=ReplyKeyboardMarkup(
 
@@ -195,29 +212,55 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 
-    # MANUAL FOREX INPUT MODE
+    # ENTER CUSTOM PAIR
 
-    elif text == "✏️ Enter Pair":
+    elif text in [
+
+        "✏️ Enter Pair",
+
+        "✍️ Enter Pair"
+
+    ]:
 
 
         context.user_data["custom_symbol"] = True
 
 
-        await update.message.reply_text(
-
-            "✏️ Enter Forex symbol\n\n"
-
-            "Examples:\n"
-            "AUDUSD\n"
-            "AUD/USD\n"
-            "EURJPY\n"
-            "USDCHF"
-
+        market = context.user_data.get(
+            "market"
         )
 
 
+        if market == "crypto":
 
-    # BUTTON SYMBOLS
+
+            await update.message.reply_text(
+
+                "✍️ Enter Crypto symbol\n\n"
+                "Examples:\n"
+                "BNBUSDT\n"
+                "DOGEUSDT\n"
+                "ADAUSDT"
+
+            )
+
+
+        else:
+
+
+            await update.message.reply_text(
+
+                "✏️ Enter Forex symbol\n\n"
+                "Examples:\n"
+                "AUDUSD\n"
+                "AUD/USD\n"
+                "EURJPY"
+
+            )
+
+
+
+    # HOT BUTTON SYMBOLS
 
     elif text in [
 
@@ -228,7 +271,8 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         "BTCUSDT",
         "ETHUSDT",
-        "SOLUSDT"
+        "SOLUSDT",
+        "XRPUSDT"
 
     ]:
 
@@ -243,7 +287,7 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         )
 
-    # BACK BUTTON
+    # BACK
 
     elif text == "⬅️ Back":
 
@@ -354,6 +398,7 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             price = get_price("EURUSD")
 
 
+
             await update.message.reply_text(
 
                 "🟢 Server Online\n\n"
@@ -362,7 +407,7 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                 "🟢 Binance Connected\n\n"
 
-                f"EURUSD\n"
+                "EURUSD\n"
 
                 f"Bid: {price['bid']}\n"
 
@@ -383,7 +428,8 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 
-    # MANUAL SYMBOL VALIDATION
+
+    # CUSTOM SYMBOL VALIDATION
 
     elif context.user_data.get("custom_symbol"):
 
@@ -394,7 +440,26 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         try:
 
 
-            valid = validate_symbol(symbol)
+            market = context.user_data.get(
+                "market"
+            )
+
+
+
+            if market == "crypto":
+
+
+                valid = validate_crypto(symbol)
+
+
+
+            else:
+
+
+                valid = validate_symbol(symbol)
+
+
+
 
 
             if not valid:
@@ -404,7 +469,7 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                     "❌ Invalid symbol\n\n"
 
-                    "This pair is not available on FXCM."
+                    "Pair is not available."
 
                 )
 
@@ -412,12 +477,16 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 
+
             context.user_data.pop(
+
                 "custom_symbol"
+
             )
 
 
             context.user_data["symbol"] = symbol
+
 
 
             await update.message.reply_text(
@@ -427,6 +496,7 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 "Enter target price:"
 
             )
+
 
 
         except Exception as e:
@@ -441,7 +511,8 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 
-    # REMOVE PROCESS
+
+    # REMOVE ALERT PROCESS
 
     elif context.user_data.get("remove"):
 
@@ -459,11 +530,13 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             context.user_data.clear()
 
 
+
             await update.message.reply_text(
 
                 "🗑 Alert removed."
 
             )
+
 
 
         except:
@@ -474,6 +547,7 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 "❌ Invalid ID"
 
             )
+
 
 
 
@@ -533,6 +607,8 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 
+
+
 # ==========================
 # START MONITOR
 # ==========================
@@ -567,6 +643,8 @@ async def start_monitor(app):
 
 
 
+
+
 # ==========================
 # MAIN
 # ==========================
@@ -576,31 +654,48 @@ def main():
 
 
     print(
+
         "STEP 1",
+
         flush=True
+
     )
+
 
 
     if not BOT_TOKEN:
 
+
         raise Exception(
+
             "BOT_TOKEN missing"
+
         )
 
 
+
     print(
+
         "STEP 2",
+
         flush=True
+
     )
+
 
 
     init_db()
 
 
+
     print(
+
         "STEP 3",
+
         flush=True
+
     )
+
 
 
     app = (
@@ -618,9 +713,13 @@ def main():
     )
 
 
+
     print(
+
         "STEP 4",
+
         flush=True
+
     )
 
 
@@ -670,6 +769,7 @@ def main():
         allowed_updates=Update.ALL_TYPES
 
     )
+
 
 
 
