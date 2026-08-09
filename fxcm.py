@@ -2,110 +2,79 @@ import os
 import requests
 
 
-FXCM_ENDPOINT = "https://endpoints-demo.fxcm.com"
-
-FXCM_USERNAME = os.getenv("FXCM_USERNAME")
-FXCM_PASSWORD = os.getenv("FXCM_PASSWORD")
+FXCM_BASE = "https://api-demo.fxcm.com"
 
 
-def fxcm_login():
-
-    session = requests.Session()
+FXCM_TOKEN = os.getenv("FXCM_TOKEN")
 
 
-    # Create session
-    r = session.post(
+def fxcm_headers():
 
-        f"{FXCM_ENDPOINT}/trading/open_session",
+    if not FXCM_TOKEN:
+        raise Exception(
+            "FXCM_TOKEN missing in environment variables"
+        )
 
-        timeout=20
-
-    )
-
-
-    r.raise_for_status()
-
-
-    session_data = r.json()
-
-
-    return session, session_data
+    return {
+        "Authorization": f"Bearer {FXCM_TOKEN}",
+        "Content-Type": "application/json"
+    }
 
 
 
-def authenticate():
+def fxcm_test():
 
-    session, data = fxcm_login()
+    headers = fxcm_headers()
 
+    response = requests.get(
 
-    response = session.post(
+        f"{FXCM_BASE}/trading/get_model",
 
-        f"{FXCM_ENDPOINT}/trading/login",
+        headers=headers,
 
-        json={
-
-            "username": FXCM_USERNAME,
-
-            "password": FXCM_PASSWORD
-
+        params={
+            "models": "Offer"
         },
 
         timeout=20
-
     )
 
 
     response.raise_for_status()
 
 
-    return session
+    return response.json()
 
 
 
 def get_price(symbol="EUR/USD"):
 
 
-    session = authenticate()
+    data = fxcm_test()
 
 
-    response = session.get(
-
-        f"{FXCM_ENDPOINT}/trading/get_model",
-
-        params={
-
-            "models":"Offer"
-
-        },
-
-        timeout=20
-
+    offers = data.get(
+        "offers",
+        []
     )
 
 
-    response.raise_for_status()
-
-
-    data=response.json()
-
-
-    offers=data.get("offers",[])
-
-
     for offer in offers:
+
 
         if offer.get("currency") == symbol:
 
 
             return {
 
-                "bid":offer.get("sell"),
+                "bid": offer.get("sell"),
 
-                "ask":offer.get("buy")
+                "ask": offer.get("buy")
 
             }
 
 
+
     raise Exception(
-        f"{symbol} not found"
+        f"{symbol} price not found"
     )
