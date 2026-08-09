@@ -25,13 +25,9 @@ market_menu = [
 
 
 def fxcm_login():
-    """
-    FXCM demo authentication test
-    """
 
     session = requests.Session()
 
-    # Get trading systems
     response = session.get(
         f"{FXCM_BASE}/iam/trading-systems/{FXCM_USERNAME}",
         headers={
@@ -55,7 +51,6 @@ def fxcm_login():
     if not xsrf:
         raise Exception("Missing FXCM security token")
 
-    # Authenticate
     auth = session.post(
         f"{FXCM_BASE}/iam/authenticate",
         json={
@@ -84,14 +79,26 @@ def fxcm_login():
     return token
 
 
-def fxcm_test():
+def get_fxcm_price():
 
     token = fxcm_login()
 
-    return {
-        "connected": True,
-        "token": token[:12] + "..."
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/json"
     }
+
+    # FXCM API test endpoint
+    url = "https://api-demo.fxcm.com:443"
+
+    response = requests.get(
+        url,
+        headers=headers,
+        timeout=20
+    )
+
+    return response.text
+
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -103,6 +110,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             resize_keyboard=True
         )
     )
+
 
 
 async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -173,7 +181,7 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             "🏦 Broker Settings\n\n"
             "FXCM Demo: 🟢 Connected\n"
-            "Crypto: Binance\n"
+            "Crypto: Binance"
         )
 
 
@@ -188,14 +196,15 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         try:
 
-            result = fxcm_test()
+            fxcm_login()
+
+            price = get_fxcm_price()
 
             await update.message.reply_text(
                 "🟢 Server Online\n\n"
-                "🟢 FXCM credentials configured\n"
                 "🟢 FXCM API connected\n\n"
-                "🔑 Authentication successful\n"
-                f"Token: {result['token']}"
+                "📊 FXCM Market Test:\n"
+                f"{price[:500]}"
             )
 
 
@@ -203,8 +212,7 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             await update.message.reply_text(
                 "🟢 Server Online\n\n"
-                "🟢 FXCM credentials configured\n"
-                "🔴 FXCM connection failed\n\n"
+                "🔴 FXCM test failed\n\n"
                 f"{str(e)}"
             )
 
@@ -217,14 +225,9 @@ def main():
 
     app = Application.builder().token(BOT_TOKEN).build()
 
-
     app.add_handler(
-        CommandHandler(
-            "start",
-            start
-        )
+        CommandHandler("start", start)
     )
-
 
     app.add_handler(
         MessageHandler(
@@ -233,9 +236,7 @@ def main():
         )
     )
 
-
     print("🚀 Bot started...")
-
 
     app.run_polling()
 
