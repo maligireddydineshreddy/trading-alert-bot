@@ -75,6 +75,18 @@ forex_menu = [
 
 
 
+crypto_menu = [
+
+    ["BTCUSDT", "ETHUSDT"],
+
+    ["SOLUSDT"],
+
+    ["⬅️ Back"]
+
+]
+
+
+
 # ==========================
 # START
 # ==========================
@@ -87,8 +99,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "🚀 Universal Trading Alert Platform",
 
         reply_markup=ReplyKeyboardMarkup(
+
             main_menu,
+
             resize_keyboard=True
+
         )
 
     )
@@ -101,6 +116,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
 
     text = update.message.text
 
@@ -116,8 +132,11 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "🌍 Select Market",
 
             reply_markup=ReplyKeyboardMarkup(
+
                 market_menu,
+
                 resize_keyboard=True
+
             )
 
         )
@@ -132,8 +151,30 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "💱 Select Forex Pair",
 
             reply_markup=ReplyKeyboardMarkup(
+
                 forex_menu,
+
                 resize_keyboard=True
+
+            )
+
+        )
+
+
+
+    elif text == "🪙 Crypto":
+
+
+        await update.message.reply_text(
+
+            "🪙 Select Crypto Pair",
+
+            reply_markup=ReplyKeyboardMarkup(
+
+                crypto_menu,
+
+                resize_keyboard=True
+
             )
 
         )
@@ -141,14 +182,21 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
     elif text in [
+
         "EURUSD",
         "GBPUSD",
         "USDJPY",
-        "GBPJPY"
+        "GBPJPY",
+
+        "BTCUSDT",
+        "ETHUSDT",
+        "SOLUSDT"
+
     ]:
 
 
         context.user_data["symbol"] = text
+
 
 
         await update.message.reply_text(
@@ -167,8 +215,11 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "🌍 Select Market",
 
             reply_markup=ReplyKeyboardMarkup(
+
                 market_menu,
+
                 resize_keyboard=True
+
             )
 
         )
@@ -186,7 +237,9 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
             await update.message.reply_text(
+
                 "📋 No active alerts."
+
             )
 
 
@@ -214,7 +267,6 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 
-
     elif text == "🗑 Remove Alert":
 
 
@@ -235,8 +287,10 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
 
             "🏦 Broker Settings\n\n"
+
             "FXCM Demo 🟢 Connected\n"
-            "Binance 🟡 Pending"
+
+            "Binance 🟢 Connected"
 
         )
 
@@ -254,9 +308,15 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(
 
                 "🟢 Server Online\n\n"
-                "🟢 FXCM Connected\n\n"
+
+                "🟢 FXCM Connected\n"
+
+                "🟢 Binance Connected\n\n"
+
                 f"EURUSD\n"
+
                 f"Bid: {price['bid']}\n"
+
                 f"Ask: {price['ask']}"
 
             )
@@ -267,7 +327,7 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             await update.message.reply_text(
 
-                f"🔴 FXCM Error\n\n{e}"
+                f"🔴 Error\n\n{e}"
 
             )
 
@@ -280,7 +340,9 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
             remove_alert(
+
                 int(text)
+
             )
 
 
@@ -326,6 +388,7 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
 
 
+
             await update.message.reply_text(
 
                 "✅ Alert Saved\n\n"
@@ -364,14 +427,21 @@ async def start_monitor(app):
 
 
     print(
+
         "📡 Starting monitor...",
+
         flush=True
+
     )
+
 
 
     monitor.set_bot(
+
         app.bot
+
     )
+
 
 
     asyncio.create_task(
@@ -392,22 +462,31 @@ def main():
 
 
     print(
+
         "STEP 1",
+
         flush=True
+
     )
 
 
     if not BOT_TOKEN:
 
+
         raise Exception(
+
             "BOT_TOKEN missing"
+
         )
 
 
 
     print(
+
         "STEP 2",
+
         flush=True
+
     )
 
 
@@ -417,8 +496,11 @@ def main():
 
 
     print(
+
         "STEP 3",
+
         flush=True
+
     )
 
 
@@ -440,8 +522,11 @@ def main():
 
 
     print(
+
         "STEP 4",
+
         flush=True
+
     )
 
 
@@ -449,8 +534,11 @@ def main():
     app.add_handler(
 
         CommandHandler(
+
             "start",
+
             start
+
         )
 
     )
@@ -482,9 +570,13 @@ def main():
 
 
     app.run_polling(
-    drop_pending_updates=True,
-    allowed_updates=Update.ALL_TYPES
-)
+
+        drop_pending_updates=True,
+
+        allowed_updates=Update.ALL_TYPES
+
+    )
+
 
 
 
