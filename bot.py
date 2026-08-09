@@ -32,7 +32,8 @@ from fxcm import (
 
 
 from crypto import (
-    validate_crypto
+    validate_crypto,
+    get_crypto_price
 )
 
 
@@ -41,6 +42,8 @@ import monitor
 
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
+
+
 
 
 
@@ -58,6 +61,7 @@ main_menu = [
     ["ℹ️ Status"]
 
 ]
+
 
 
 
@@ -89,6 +93,7 @@ forex_menu = [
     ["⬅️ Back"]
 
 ]
+
 
 
 
@@ -136,6 +141,7 @@ commodity_menu = [
 
 
 
+
 # ==========================
 # INDICES MENU
 # ==========================
@@ -152,6 +158,7 @@ indices_menu = [
     ["⬅️ Back"]
 
 ]
+
 
 
 
@@ -192,11 +199,6 @@ HOT_SYMBOLS = [
     "US100"
 
 ]
-
-
-
-
-
 # ==========================
 # START COMMAND
 # ==========================
@@ -222,6 +224,11 @@ async def start(
 
     )
 
+
+
+
+
+
 # ==========================
 # MENU HANDLER
 # ==========================
@@ -236,6 +243,8 @@ async def menu_handler(
     text = update.message.text
 
     user_id = update.message.from_user.id
+
+
 
 
 
@@ -265,6 +274,9 @@ async def menu_handler(
 
 
 
+
+
+
     # ==========================
     # FOREX
     # ==========================
@@ -279,7 +291,7 @@ async def menu_handler(
         await update.message.reply_text(
 
             "💱 Select Forex Pair\n\n"
-            "Or enter any FXCM pair manually",
+            "Or enter FXCM pair manually",
 
             reply_markup=ReplyKeyboardMarkup(
 
@@ -290,6 +302,8 @@ async def menu_handler(
             )
 
         )
+
+
 
 
 
@@ -325,6 +339,8 @@ async def menu_handler(
 
 
 
+
+
     # ==========================
     # COMMODITIES
     # ==========================
@@ -350,6 +366,8 @@ async def menu_handler(
             )
 
         )
+
+
 
 
 
@@ -385,8 +403,11 @@ async def menu_handler(
 
 
 
+
+
+
     # ==========================
-    # MANUAL INPUT
+    # MANUAL SYMBOL INPUT
     # ==========================
 
 
@@ -426,25 +447,6 @@ async def menu_handler(
 
 
 
-        elif text == "✏️ Enter Index":
-
-
-            context.user_data["market"] = "indices"
-
-
-            await update.message.reply_text(
-
-                "📊 Enter Index Symbol\n\n"
-
-                "Examples:\n"
-                "GER30\n"
-                "UK100\n"
-                "JPN225"
-
-            )
-
-
-
         elif text == "✍️ Enter Commodity":
 
 
@@ -464,6 +466,25 @@ async def menu_handler(
 
 
 
+        elif text == "✏️ Enter Index":
+
+
+            context.user_data["market"] = "indices"
+
+
+            await update.message.reply_text(
+
+                "📊 Enter Index Symbol\n\n"
+
+                "Examples:\n"
+                "GER30\n"
+                "UK100\n"
+                "JPN225"
+
+            )
+
+
+
         else:
 
 
@@ -472,7 +493,7 @@ async def menu_handler(
 
             await update.message.reply_text(
 
-                "💱 Enter Forex Pair\n\n"
+                "💱 Enter Forex Symbol\n\n"
 
                 "Examples:\n"
                 "AUDUSD\n"
@@ -480,6 +501,9 @@ async def menu_handler(
                 "EURJPY"
 
             )
+
+
+
 
 
 
@@ -496,7 +520,6 @@ async def menu_handler(
         context.user_data["symbol"] = text
 
 
-
         await update.message.reply_text(
 
             f"📊 {text} Selected\n\n"
@@ -509,8 +532,11 @@ async def menu_handler(
 
 
 
+
+
+
     # ==========================
-    # BACK
+    # BACK BUTTON
     # ==========================
 
 
@@ -530,6 +556,9 @@ async def menu_handler(
             )
 
         )
+
+
+
 
 
 
@@ -563,6 +592,7 @@ async def menu_handler(
             msg = "📋 Your Alerts:\n\n"
 
 
+
             for a in alerts:
 
 
@@ -570,18 +600,19 @@ async def menu_handler(
 
                     f"ID: {a[0]}\n"
 
-                    f"{a[2]} → {a[3]}\n"
+                    f"Symbol: {a[2]}\n"
 
-                    f"Status: {a[4]}\n\n"
+                    f"Target: {a[3]}\n"
+
+                    f"Direction: {a[4]}\n"
+
+                    f"Status: {a[5]}\n\n"
 
                 )
 
 
+
             await update.message.reply_text(msg)
-
-
-
-
 
     # ==========================
     # REMOVE ALERT
@@ -596,9 +627,15 @@ async def menu_handler(
 
         await update.message.reply_text(
 
-            "Send alert ID:"
+            "Send Alert ID:"
 
         )
+
+
+
+
+
+
 
     # ==========================
     # BROKER SETTINGS
@@ -617,6 +654,8 @@ async def menu_handler(
             "🟢 Binance Connected"
 
         )
+
+
 
 
 
@@ -654,6 +693,7 @@ async def menu_handler(
             )
 
 
+
         except Exception as e:
 
 
@@ -662,6 +702,7 @@ async def menu_handler(
                 f"🔴 Error\n\n{e}"
 
             )
+
 
 
 
@@ -698,10 +739,8 @@ async def menu_handler(
             else:
 
 
-                # Forex + Commodities + Indices
-                # FXCM validation
-
                 valid = validate_symbol(symbol)
+
 
 
 
@@ -723,10 +762,10 @@ async def menu_handler(
 
 
 
+
+
             context.user_data.pop(
-
                 "custom_symbol"
-
             )
 
 
@@ -758,8 +797,9 @@ async def menu_handler(
 
 
 
+
     # ==========================
-    # REMOVE ALERT PROCESS
+    # REMOVE PROCESS
     # ==========================
 
 
@@ -782,7 +822,7 @@ async def menu_handler(
 
             await update.message.reply_text(
 
-                "🗑 Alert removed."
+                "🗑 Alert Removed."
 
             )
 
@@ -802,8 +842,9 @@ async def menu_handler(
 
 
 
+
     # ==========================
-    # SAVE ALERT
+    # SAVE ALERT WITH DIRECTION
     # ==========================
 
 
@@ -816,14 +857,76 @@ async def menu_handler(
             target = float(text)
 
 
+            symbol = context.user_data["symbol"]
+
+
+
+
+
+
+            # GET CURRENT PRICE
+
+
+            if symbol.endswith("USDT"):
+
+
+                data = get_crypto_price(symbol)
+
+
+                current_price = float(
+                    data["price"]
+                )
+
+
+
+            else:
+
+
+                data = get_price(symbol)
+
+
+                current_price = float(
+                    data["bid"]
+                )
+
+
+
+
+
+
+
+            # AUTO DIRECTION
+
+
+            if current_price < target:
+
+
+                direction = "ABOVE"
+
+
+            else:
+
+
+                direction = "BELOW"
+
+
+
+
+
+
+
+            # SAVE
+
 
             add_alert(
 
                 user_id,
 
-                context.user_data["symbol"],
+                symbol,
 
-                target
+                target,
+
+                direction
 
             )
 
@@ -833,9 +936,13 @@ async def menu_handler(
 
                 "✅ Alert Saved\n\n"
 
-                f"Symbol: {context.user_data['symbol']}\n"
+                f"Symbol: {symbol}\n"
 
-                f"Target: {target}\n\n"
+                f"Current: {current_price}\n"
+
+                f"Target: {target}\n"
+
+                f"Direction: {direction}\n\n"
 
                 "🚀 Monitoring Started"
 
@@ -847,14 +954,15 @@ async def menu_handler(
 
 
 
-        except:
+        except Exception as e:
 
 
             await update.message.reply_text(
 
-                "❌ Enter valid price"
+                f"❌ Error creating alert\n\n{e}"
 
             )
+
 
 
 
@@ -915,6 +1023,7 @@ def main():
     )
 
 
+
     if not BOT_TOKEN:
 
 
@@ -946,6 +1055,7 @@ def main():
         flush=True
 
     )
+
 
 
     app = (
@@ -1024,7 +1134,8 @@ def main():
 
 
 
+
+
 if __name__ == "__main__":
 
     main()
-
