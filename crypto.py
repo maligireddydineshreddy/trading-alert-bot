@@ -6,17 +6,15 @@ client = Client()
 
 
 # ==========================
-# SUPPORTED CRYPTO
+# HOT BUTTON CRYPTO
 # ==========================
 
 COMMON_CRYPTO = [
 
-    # Hot buttons
     "BTCUSDT",
     "ETHUSDT",
     "SOLUSDT",
     "XRPUSDT",
-
 
     # Backend only
     "BNBUSDT"
@@ -39,7 +37,33 @@ def get_crypto_price(symbol):
 
 
 
-    if symbol not in COMMON_CRYPTO:
+    try:
+
+
+        ticker = client.get_symbol_ticker(
+
+            symbol=symbol
+
+        )
+
+
+        return {
+
+
+            "symbol": symbol,
+
+
+            "price": float(
+
+                ticker["price"]
+
+            )
+
+        }
+
+
+
+    except Exception:
 
 
         raise Exception(
@@ -47,30 +71,6 @@ def get_crypto_price(symbol):
             "Crypto symbol not supported"
 
         )
-
-
-
-    ticker = client.get_symbol_ticker(
-
-        symbol=symbol
-
-    )
-
-
-
-    return {
-
-
-        "symbol": symbol,
-
-
-        "price": float(
-
-            ticker["price"]
-
-        )
-
-    }
 
 
 
@@ -89,7 +89,7 @@ def validate_crypto(symbol):
 
 
 
-    # Fast local check
+    # Fast check for common coins
 
     if symbol in COMMON_CRYPTO:
 
@@ -97,7 +97,7 @@ def validate_crypto(symbol):
 
 
 
-    # Binance fallback
+    # Binance API check for any coin
 
     try:
 
@@ -113,7 +113,7 @@ def validate_crypto(symbol):
 
 
 
-    except:
+    except Exception:
 
 
         return False
