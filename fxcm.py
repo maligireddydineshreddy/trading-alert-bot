@@ -5,35 +5,39 @@ import requests
 FXCM_USERNAME = os.getenv("FXCM_USERNAME")
 FXCM_PASSWORD = os.getenv("FXCM_PASSWORD")
 
-
-BASE_URL = "https://endpoints-demo.fxcm.com"
+# Working FXCM endpoint
+FXCM_BASE = "https://endpoints-demo.fxcm.com"
 
 
 session = requests.Session()
-TOKEN = None
+
+ACCESS_TOKEN = None
 
 
 
-def login():
+def fxcm_login():
 
-    global TOKEN
+    global ACCESS_TOKEN
 
 
-    # Get trading systems
+    # Step 1: Get trading system
 
-    r = session.get(
-        f"{BASE_URL}/iam/trading-systems/{FXCM_USERNAME}",
+    response = session.get(
+
+        f"{FXCM_BASE}/iam/trading-systems/{FXCM_USERNAME}",
+
         headers={
             "X-COOKIE-DOMAIN": "fxcm.com"
         },
+
         timeout=20
     )
 
 
-    r.raise_for_status()
+    response.raise_for_status()
 
 
-    systems = r.json()
+    systems = response.json()
 
 
     if not systems:
@@ -48,21 +52,26 @@ def login():
 
 
 
-    xsrf = session.cookies.get(
+    # Step 2: Get XSRF token
+
+    xsrf_token = session.cookies.get(
         "XSRF-TOKEN"
     )
 
 
-    if not xsrf:
+    if not xsrf_token:
+
         raise Exception(
-            "XSRF token missing"
+            "FXCM XSRF token missing"
         )
 
 
 
-    auth = session.post(
+    # Step 3: Authenticate
 
-        f"{BASE_URL}/iam/authenticate",
+    auth_response = session.post(
+
+        f"{FXCM_BASE}/iam/authenticate",
 
         json={
 
@@ -70,60 +79,81 @@ def login():
 
             "password": FXCM_PASSWORD,
 
-            "tradingSessionId":
-                trading_session_id,
+            "tradingSessionId": trading_session_id,
 
-            "tradingSessionSubId":
-                trading_session_sub_id,
+            "tradingSessionSubId": trading_session_sub_id,
 
-            "appName":
-                "TelegramTradingAlertBot"
+            "appName": "TelegramTradingAlertBot"
+
         },
 
 
         headers={
 
-            "X-COOKIE-DOMAIN":
-                "fxcm.com",
+            "X-COOKIE-DOMAIN": "fxcm.com",
 
-            "X-XSRF-TOKEN":
-                xsrf
+            "X-XSRF-TOKEN": xsrf_token
+
         },
 
 
         timeout=20
+
     )
 
 
-    auth.raise_for_status()
+    auth_response.raise_for_status()
 
 
-    data = auth.json()
+    data = auth_response.json()
 
 
-    TOKEN = data["accessToken"]
+    ACCESS_TOKEN = data.get(
+        "accessToken"
+    )
 
 
-    return TOKEN
+    if not ACCESS_TOKEN:
+
+        raise Exception(
+            "FXCM access token not received"
+        )
 
 
-
-
-
-def get_price(symbol):
-
-
-    global TOKEN
-
-
-    if TOKEN is None:
-        login()
+    return ACCESS_TOKEN
 
 
 
-    r = session.get(
 
-        f"{BASE_URL}/trading/get_model",
+
+def get_price(symbol="EURUSD"):
+
+    global ACCESS_TOKEN
+
+
+    if ACCESS_TOKEN is None:
+
+        fxcm_login()
+
+
+
+    headers = {
+
+        "Authorization":
+            f"Bearer {ACCESS_TOKEN}",
+
+        "Accept":
+            "application/json"
+
+    }
+
+
+
+    # Get market prices
+
+    response = session.get(
+
+        f"{FXCM_BASE}/trading/get_model",
 
         params={
 
@@ -133,45 +163,72 @@ def get_price(symbol):
         },
 
 
-        headers={
-
-            "Authorization":
-                f"Bearer {TOKEN}"
-
-        },
+        headers=headers,
 
 
         timeout=20
+
     )
 
 
-    r.raise_for_status()
+    response.raise_for_status()
 
 
-    data = r.json()
+    data = response.json()
 
 
-    offers = data["Offer"]
+
+    offers = data.get(
+        "Offer",
+        []
+    )
 
 
 
     for offer in offers:
 
-        if offer["currency"] == symbol:
+
+        if offer.get("currency") == symbol:
 
 
             return {
 
+                "symbol": symbol,
+
                 "bid":
-                    offer["bid"],
+                    offer.get("sell"),
 
                 "ask":
-                    offer["ask"]
+                    offer.get("buy"),
+
+                "spread":
+                    offer.get("spread"),
+
+                "time":
+                    offer.get("time")
 
             }
 
 
 
     raise Exception(
-        f"{symbol} not found"
+        f"{symbol} price not found"
     )
+
+
+
+
+
+def test_connection():
+
+    token = fxcm_login()
+
+
+    return {
+
+        "connected": True,
+
+        "token":
+            token[:10] + "..."
+
+    }
