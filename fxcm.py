@@ -3,7 +3,7 @@ import requests
 
 
 FXCM_BASE = "https://endpoints-demo.fxcm.com"
-FXCM_API = "https://api-demo.fxcm.com"
+FXCM_API = "https://api-demo.fxcm.com:443"
 
 
 USERNAME = os.getenv("FXCM_USERNAME")
