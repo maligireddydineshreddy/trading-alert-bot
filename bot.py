@@ -31,7 +31,8 @@ from database import (
 
 from fxcm import (
     get_price,
-    validate_symbol
+    validate_symbol,
+    init_fxcm
 )
 
 
@@ -1190,6 +1191,13 @@ def main():
 
     init_db()
 
+    print(
+    "Connecting FXCM...",
+    flush=True
+    )
+
+    init_fxcm()
+
 
 
 
@@ -1353,7 +1361,7 @@ def main():
 
     app.run_polling(
 
-        drop_pending_updates=True,
+        drop_pending_updates=False,
 
         allowed_updates=Update.ALL_TYPES
 
