@@ -5,15 +5,20 @@ DB_NAME = "alerts.db"
 
 
 
+
+
 # ==========================
 # CREATE DATABASE
 # ==========================
 
+
 def init_db():
+
 
     conn = sqlite3.connect(DB_NAME)
 
     cursor = conn.cursor()
+
 
 
     cursor.execute("""
@@ -27,10 +32,13 @@ def init_db():
 
         target_price REAL,
 
+        direction TEXT,
+
         status TEXT DEFAULT 'ACTIVE'
 
     )
     """)
+
 
 
     conn.commit()
@@ -39,15 +47,22 @@ def init_db():
 
 
 
+
+
+
+
 # ==========================
 # ADD ALERT
 # ==========================
 
-def add_alert(user_id, symbol, price):
+
+def add_alert(user_id, symbol, price, direction):
+
 
     conn = sqlite3.connect(DB_NAME)
 
     cursor = conn.cursor()
+
 
 
     cursor.execute(
@@ -56,18 +71,23 @@ def add_alert(user_id, symbol, price):
         (
             user_id,
             symbol,
-            target_price
+            target_price,
+            direction
         )
 
-        VALUES (?, ?, ?)
+        VALUES (?, ?, ?, ?)
 
         """,
+
         (
             user_id,
             symbol,
-            price
+            price,
+            direction
         )
+
     )
+
 
 
     conn.commit()
@@ -76,36 +96,54 @@ def add_alert(user_id, symbol, price):
 
 
 
+
+
+
+
 # ==========================
 # USER ALERTS
 # ==========================
 
+
 def get_user_alerts(user_id):
+
 
     conn = sqlite3.connect(DB_NAME)
 
     cursor = conn.cursor()
 
 
+
     cursor.execute(
         """
         SELECT *
         FROM alerts
+
         WHERE user_id=?
+
         AND status='ACTIVE'
 
         """,
+
         (user_id,)
+
     )
+
 
 
     alerts = cursor.fetchall()
 
 
+
     conn.close()
 
 
+
     return alerts
+
+
+
+
 
 
 
@@ -113,30 +151,41 @@ def get_user_alerts(user_id):
 # ALL ACTIVE ALERTS
 # ==========================
 
+
 def get_active_alerts():
+
 
     conn = sqlite3.connect(DB_NAME)
 
     cursor = conn.cursor()
 
 
+
     cursor.execute(
         """
         SELECT *
         FROM alerts
+
         WHERE status='ACTIVE'
 
         """
     )
 
 
+
     alerts = cursor.fetchall()
+
 
 
     conn.close()
 
 
+
     return alerts
+
+
+
+
 
 
 
@@ -144,11 +193,14 @@ def get_active_alerts():
 # REMOVE ALERT
 # ==========================
 
+
 def remove_alert(alert_id):
+
 
     conn = sqlite3.connect(DB_NAME)
 
     cursor = conn.cursor()
+
 
 
     cursor.execute(
@@ -160,8 +212,11 @@ def remove_alert(alert_id):
         WHERE id=?
 
         """,
+
         (alert_id,)
+
     )
+
 
 
     conn.commit()
@@ -170,9 +225,14 @@ def remove_alert(alert_id):
 
 
 
+
+
+
+
 # ==========================
 # DISABLE AFTER HIT
 # ==========================
+
 
 def disable_alert(alert_id):
 
