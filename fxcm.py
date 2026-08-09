@@ -10,11 +10,10 @@ def get_price(symbol):
         "GBPUSD": "GBP/USD",
         "USDJPY": "USD/JPY",
         "GBPJPY": "GBP/JPY",
-        "BTCUSDT": "BTC/USD",
-        "ETHUSDT": "ETH/USD",
+        "XAUUSD": "XAU/USD"
     }
 
-    instrument = symbol_map.get(symbol, symbol)
+    target = symbol_map.get(symbol, symbol)
 
     fx = ForexConnect()
 
@@ -25,6 +24,7 @@ def get_price(symbol):
         "Demo"
     )
 
+
     offers = fx.get_table(
         fxcorepy.O2GTableType.OFFERS
     )
@@ -32,9 +32,9 @@ def get_price(symbol):
 
     for row in offers:
 
-        if row.instrument == instrument:
+        if row.instrument == target:
 
-            price = {
+            data = {
                 "symbol": row.instrument,
                 "bid": row.bid,
                 "ask": row.ask
@@ -42,11 +42,11 @@ def get_price(symbol):
 
             fx.logout()
 
-            return price
+            return data
 
 
     fx.logout()
 
     raise Exception(
-        f"{instrument} not found"
+        f"{symbol} not found"
     )
