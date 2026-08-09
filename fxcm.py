@@ -2,35 +2,34 @@ import os
 import requests
 
 
-FXCM_USER = os.getenv("FXCM_USERNAME")
-FXCM_PASSWORD = os.getenv("FXCM_PASSWORD")
+FXCM_ENDPOINT = "https://endpoints-demo.fxcm.com"
 
-
-BASE_URL = "https://api-demo.fxcm.com"
+FXCM_USERNAME = os.getenv("FXCM_USERNAME")
 
 
 def get_session():
 
-    session = requests.Session()
+    url = (
+        f"{FXCM_ENDPOINT}/iam/trading-systems/"
+        f"{FXCM_USERNAME}"
+    )
 
-    payload = {
-        "login": FXCM_USER,
-        "password": FXCM_PASSWORD
-    }
-
-
-    response = session.post(
-        f"{BASE_URL}/trading/open_session",
-        json=payload,
+    r = requests.get(
+        url,
+        headers={
+            "X-COOKIE-DOMAIN": "fxcm.com"
+        },
         timeout=20
     )
 
+    r.raise_for_status()
 
-    print(response.text)
+    data = r.json()
 
+    if not data:
+        raise Exception("No FXCM trading session found")
 
-    response.raise_for_status()
-
+    session = data[0]
 
     return session
 
@@ -40,23 +39,38 @@ def get_price(symbol="EUR/USD"):
 
     session = get_session()
 
+    trading_session = session["tradingSessionId"]
+    sub_session = session["tradingSessionSubId"]
 
-    response = session.get(
+    url = (
+        f"{FXCM_ENDPOINT}/"
+        f"trading/get_model"
+    )
 
-        f"{BASE_URL}/trading/get_model",
 
-        params={
-            "models": "Offer"
-        },
+    headers = {
+        "X-COOKIE-DOMAIN": "fxcm.com"
+    }
 
+
+    params = {
+        "models": "Offer",
+        "tradingSessionId": trading_session,
+        "tradingSessionSubId": sub_session
+    }
+
+
+    r = requests.get(
+        url,
+        headers=headers,
+        params=params,
         timeout=20
     )
 
 
-    response.raise_for_status()
+    r.raise_for_status()
 
-
-    data = response.json()
+    data = r.json()
 
 
     offers = data.get("offers", [])
