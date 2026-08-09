@@ -8,4 +8,6 @@ RUN pip install --upgrade pip
 
 RUN pip install -r requirements.txt
 
+ENV LD_LIBRARY_PATH=/app/forexconnect/lib:$LD_LIBRARY_PATH
+
 CMD ["python", "bot.py"]
