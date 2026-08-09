@@ -2,8 +2,7 @@ import asyncio
 
 
 from fxcm import get_price
-
-from crypto import get_crypto_price, validate_crypto
+from crypto import get_crypto_price
 
 
 from database import (
@@ -18,12 +17,12 @@ telegram_bot = None
 
 
 
-
 def set_bot(bot):
 
     global telegram_bot
 
     telegram_bot = bot
+
 
 
 
@@ -49,6 +48,11 @@ async def send_alert(user_id, message):
 
 
 
+# ==========================
+# PRICE ROUTER
+# ==========================
+
+
 def get_current_price(symbol):
 
 
@@ -56,9 +60,11 @@ def get_current_price(symbol):
 
 
 
-    # Check crypto through Binance
+    # ======================
+    # CRYPTO
+    # ======================
 
-    if validate_crypto(symbol):
+    if symbol.endswith("USDT"):
 
 
         data = get_crypto_price(symbol)
@@ -72,7 +78,14 @@ def get_current_price(symbol):
 
 
 
-    # Otherwise FXCM Forex
+
+    # ======================
+    # FXCM
+    # Forex
+    # Commodities
+    # Indices
+    # ======================
+
 
     else:
 
@@ -93,6 +106,11 @@ def get_current_price(symbol):
 
 
 
+# ==========================
+# CHECK ALERTS
+# ==========================
+
+
 async def check_alerts():
 
 
@@ -101,6 +119,7 @@ async def check_alerts():
 
 
     for alert in alerts:
+
 
 
         alert_id = alert[0]
@@ -113,21 +132,30 @@ async def check_alerts():
 
 
 
+
         try:
+
 
 
             current = get_current_price(symbol)
 
 
 
+
             print(
 
-                f"{symbol} | {current} | Target {target}",
+                f"{symbol} | Current: {current} | Target: {target}",
 
                 flush=True
 
             )
 
+
+
+
+
+            # Current system:
+            # Alert only when price goes ABOVE target
 
 
             if current >= target:
@@ -136,20 +164,25 @@ async def check_alerts():
 
                 await send_alert(
 
+
                     user_id,
 
 
                     f"""
 🚨 PRICE ALERT HIT
 
+
 Symbol:
 {symbol}
+
 
 Target:
 {target}
 
+
 Current:
 {current}
+
 """
 
                 )
@@ -161,7 +194,10 @@ Current:
 
 
 
+
+
         except Exception as e:
+
 
 
             print(
@@ -181,6 +217,12 @@ Current:
 
 
 
+
+# ==========================
+# MONITOR LOOP
+# ==========================
+
+
 async def monitor_loop():
 
 
@@ -197,7 +239,9 @@ async def monitor_loop():
     while True:
 
 
+
         await check_alerts()
+
 
 
         await asyncio.sleep(10)
