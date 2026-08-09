@@ -3,7 +3,7 @@ import asyncio
 
 from fxcm import get_price
 
-from crypto import get_crypto_price
+from crypto import get_crypto_price, validate_crypto
 
 
 from database import (
@@ -14,6 +14,7 @@ from database import (
 
 
 telegram_bot = None
+
 
 
 
@@ -47,6 +48,7 @@ async def send_alert(user_id, message):
 
 
 
+
 def get_current_price(symbol):
 
 
@@ -54,9 +56,9 @@ def get_current_price(symbol):
 
 
 
-    # Crypto
+    # Check crypto through Binance
 
-    if symbol.endswith("USDT"):
+    if validate_crypto(symbol):
 
 
         data = get_crypto_price(symbol)
@@ -70,7 +72,7 @@ def get_current_price(symbol):
 
 
 
-    # Forex
+    # Otherwise FXCM Forex
 
     else:
 
@@ -83,6 +85,7 @@ def get_current_price(symbol):
             data["bid"]
 
         )
+
 
 
 
@@ -170,6 +173,7 @@ Current:
                 flush=True
 
             )
+
 
 
 
