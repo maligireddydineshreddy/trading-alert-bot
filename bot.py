@@ -25,7 +25,10 @@ from database import (
 )
 
 
-from fxcm import get_price
+from fxcm import (
+    get_price,
+    validate_symbol
+)
 
 
 import monitor
@@ -68,6 +71,8 @@ forex_menu = [
     ["EURUSD", "GBPUSD"],
 
     ["USDJPY", "GBPJPY"],
+
+    ["✏️ Enter Pair"],
 
     ["⬅️ Back"]
 
@@ -124,6 +129,8 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 
+    # ADD ALERT
+
     if text == "📈 Add Alert":
 
 
@@ -143,12 +150,15 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 
+    # FOREX MENU
+
     elif text == "💱 Forex":
 
 
         await update.message.reply_text(
 
-            "💱 Select Forex Pair",
+            "💱 Select Forex Pair\n\n"
+            "Or enter any FXCM pair manually",
 
             reply_markup=ReplyKeyboardMarkup(
 
@@ -161,6 +171,8 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
+
+    # CRYPTO MENU
 
     elif text == "🪙 Crypto":
 
@@ -181,6 +193,30 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 
+    # MANUAL FOREX INPUT MODE
+
+    elif text == "✏️ Enter Pair":
+
+
+        context.user_data["custom_symbol"] = True
+
+
+        await update.message.reply_text(
+
+            "✏️ Enter Forex symbol\n\n"
+
+            "Examples:\n"
+            "AUDUSD\n"
+            "AUD/USD\n"
+            "EURJPY\n"
+            "USDCHF"
+
+        )
+
+
+
+    # BUTTON SYMBOLS
+
     elif text in [
 
         "EURUSD",
@@ -198,14 +234,14 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["symbol"] = text
 
 
-
         await update.message.reply_text(
 
-            f"📊 {text} Selected\n\nEnter target price:"
+            f"📊 {text} Selected\n\n"
+            "Enter target price:"
 
         )
 
-
+    # BACK BUTTON
 
     elif text == "⬅️ Back":
 
@@ -225,6 +261,8 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
+
+    # MY ALERTS
 
     elif text == "📋 My Alerts":
 
@@ -267,6 +305,9 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 
+
+    # REMOVE ALERT
+
     elif text == "🗑 Remove Alert":
 
 
@@ -280,6 +321,9 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
+
+
+    # BROKER SETTINGS
 
     elif text == "🏦 Broker Settings":
 
@@ -295,6 +339,9 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
+
+
+    # STATUS
 
     elif text == "ℹ️ Status":
 
@@ -333,6 +380,67 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 
+
+    # MANUAL SYMBOL VALIDATION
+
+    elif context.user_data.get("custom_symbol"):
+
+
+        symbol = text.upper().replace("/", "")
+
+
+        try:
+
+
+            valid = validate_symbol(symbol)
+
+
+            if not valid:
+
+
+                await update.message.reply_text(
+
+                    "❌ Invalid symbol\n\n"
+
+                    "This pair is not available on FXCM."
+
+                )
+
+                return
+
+
+
+            context.user_data.pop(
+                "custom_symbol"
+            )
+
+
+            context.user_data["symbol"] = symbol
+
+
+            await update.message.reply_text(
+
+                f"📊 {symbol} Selected\n\n"
+
+                "Enter target price:"
+
+            )
+
+
+        except Exception as e:
+
+
+            await update.message.reply_text(
+
+                f"❌ Symbol check failed\n\n{e}"
+
+            )
+
+
+
+
+    # REMOVE PROCESS
+
     elif context.user_data.get("remove"):
 
 
@@ -366,6 +474,9 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
 
 
+
+
+    # SAVE ALERT
 
     elif "symbol" in context.user_data:
 
@@ -402,6 +513,7 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
 
 
+
             context.user_data.clear()
 
 
@@ -414,6 +526,7 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 "❌ Enter valid price"
 
             )
+
 
 
 
@@ -435,7 +548,6 @@ async def start_monitor(app):
     )
 
 
-
     monitor.set_bot(
 
         app.bot
@@ -443,12 +555,12 @@ async def start_monitor(app):
     )
 
 
-
     asyncio.create_task(
 
         monitor.monitor_loop()
 
     )
+
 
 
 
@@ -462,47 +574,31 @@ def main():
 
 
     print(
-
         "STEP 1",
-
         flush=True
-
     )
 
 
     if not BOT_TOKEN:
 
-
         raise Exception(
-
             "BOT_TOKEN missing"
-
         )
 
 
-
     print(
-
         "STEP 2",
-
         flush=True
-
     )
-
 
 
     init_db()
 
 
-
     print(
-
         "STEP 3",
-
         flush=True
-
     )
-
 
 
     app = (
@@ -520,13 +616,9 @@ def main():
     )
 
 
-
     print(
-
         "STEP 4",
-
         flush=True
-
     )
 
 
@@ -576,6 +668,7 @@ def main():
         allowed_updates=Update.ALL_TYPES
 
     )
+
 
 
 
