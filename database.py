@@ -32,12 +32,60 @@ def init_db():
 
         target_price REAL,
 
-        direction TEXT,
+        direction TEXT DEFAULT 'ABOVE',
 
         status TEXT DEFAULT 'ACTIVE'
 
     )
     """)
+
+
+
+    # ==========================
+    # MIGRATION FOR OLD DATABASE
+    # ==========================
+
+
+    cursor.execute(
+        "PRAGMA table_info(alerts)"
+    )
+
+
+    columns = [
+
+        row[1]
+
+        for row in cursor.fetchall()
+
+    ]
+
+
+
+    if "direction" not in columns:
+
+
+        cursor.execute(
+            """
+            ALTER TABLE alerts
+
+            ADD COLUMN direction TEXT DEFAULT 'ABOVE'
+
+            """
+        )
+
+
+
+    if "status" not in columns:
+
+
+        cursor.execute(
+            """
+            ALTER TABLE alerts
+
+            ADD COLUMN status TEXT DEFAULT 'ACTIVE'
+
+            """
+        )
 
 
 
@@ -56,7 +104,12 @@ def init_db():
 # ==========================
 
 
-def add_alert(user_id, symbol, price, direction):
+def add_alert(
+    user_id,
+    symbol,
+    price,
+    direction
+):
 
 
     conn = sqlite3.connect(DB_NAME)
@@ -117,6 +170,7 @@ def get_user_alerts(user_id):
     cursor.execute(
         """
         SELECT *
+
         FROM alerts
 
         WHERE user_id=?
@@ -125,14 +179,15 @@ def get_user_alerts(user_id):
 
         """,
 
-        (user_id,)
+        (
+            user_id,
+        )
 
     )
 
 
 
     alerts = cursor.fetchall()
-
 
 
     conn.close()
@@ -164,6 +219,7 @@ def get_active_alerts():
     cursor.execute(
         """
         SELECT *
+
         FROM alerts
 
         WHERE status='ACTIVE'
@@ -213,7 +269,9 @@ def remove_alert(alert_id):
 
         """,
 
-        (alert_id,)
+        (
+            alert_id,
+        )
 
     )
 
@@ -230,10 +288,11 @@ def remove_alert(alert_id):
 
 
 # ==========================
-# DISABLE AFTER HIT
+# DISABLE AFTER ALERT HIT
 # ==========================
 
 
 def disable_alert(alert_id):
+
 
     remove_alert(alert_id)
