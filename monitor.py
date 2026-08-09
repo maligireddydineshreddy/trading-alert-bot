@@ -11,7 +11,6 @@ from database import (
 telegram_bot = None
 
 
-
 def set_bot(bot):
     global telegram_bot
     telegram_bot = bot
@@ -40,7 +39,6 @@ async def check_alerts():
         user_id = alert[1]
         symbol = alert[2]
         target = float(alert[3])
-        direction = alert[4]
 
 
         try:
@@ -52,23 +50,7 @@ async def check_alerts():
             )
 
 
-            hit = False
-
-
-            if direction == "UP":
-
-                if current >= target:
-                    hit = True
-
-
-            elif direction == "DOWN":
-
-                if current <= target:
-                    hit = True
-
-
-
-            if hit:
+            if current >= target:
 
 
                 await send_alert(
@@ -77,7 +59,7 @@ async def check_alerts():
                     f"""
 🚨 PRICE ALERT HIT
 
-Symbol:
+Pair:
 {symbol}
 
 Target:
@@ -97,7 +79,8 @@ Current:
 
             print(
                 "Monitor error:",
-                e
+                e,
+                flush=True
             )
 
 
@@ -105,7 +88,8 @@ Current:
 async def monitor_loop():
 
     print(
-        "📡 Monitor running"
+        "📡 Monitor running",
+        flush=True
     )
 
 
