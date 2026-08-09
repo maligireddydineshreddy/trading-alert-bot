@@ -875,10 +875,10 @@ async def menu_handler(
 
     elif text == "ℹ️ Status":
 
-    await system_status(
-        update,
-        context
-    )
+            await system_status(
+                update,
+                context
+            )
 
 
 
@@ -892,14 +892,6 @@ async def menu_handler(
 # ==================================================
 
 
-    elif text == "🏦 Broker Settings":
-
-
-        await update.message.reply_text(
-
-            "❌ This feature has been removed."
-
-        )
 
 # ==================================================
 # INLINE CALLBACK HANDLER
