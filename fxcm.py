@@ -17,7 +17,6 @@ from forexconnect import (
 
 COMMON_FOREX = [
 
-    # Major pairs
     "EURUSD",
     "GBPUSD",
     "USDJPY",
@@ -26,8 +25,6 @@ COMMON_FOREX = [
     "AUDUSD",
     "NZDUSD",
 
-
-    # Major crosses
     "EURGBP",
     "EURJPY",
     "EURCHF",
@@ -42,14 +39,32 @@ COMMON_FOREX = [
     "CHFJPY",
     "NZDJPY",
 
-
-    # Additional popular pairs
     "AUDCAD",
     "AUDNZD",
     "EURNZD",
     "GBPCAD"
 
 ]
+
+
+
+
+
+# ==========================
+# COMMON COMMODITIES
+# ==========================
+
+
+COMMON_COMMODITIES = [
+
+    "XAUUSD",
+    "XAGUSD",
+    "USOIL",
+    "COPPER"
+
+]
+
+
 
 
 
@@ -86,6 +101,7 @@ def login_fxcm():
 
 
 
+
 # ==========================
 # GET PRICE
 # ==========================
@@ -100,6 +116,7 @@ def get_price(symbol):
     fx = login_fxcm()
 
 
+
     offers = fx.get_table(
 
         fxcorepy.O2GTableType.OFFERS
@@ -107,10 +124,12 @@ def get_price(symbol):
     )
 
 
+
     for row in offers:
 
 
         fx_symbol = row.instrument.replace("/", "")
+
 
 
         if fx_symbol == symbol:
@@ -128,6 +147,7 @@ def get_price(symbol):
             }
 
 
+
             fx.logout()
 
 
@@ -135,7 +155,10 @@ def get_price(symbol):
 
 
 
+
+
     fx.logout()
+
 
 
     raise Exception(
@@ -143,6 +166,7 @@ def get_price(symbol):
         f"{symbol} not found"
 
     )
+
 
 
 
@@ -170,7 +194,15 @@ def validate_symbol(symbol):
 
 
 
-    # FALLBACK FXCM CHECK
+    if symbol in COMMON_COMMODITIES:
+
+        return True
+
+
+
+
+
+    # FXCM FALLBACK CHECK
 
     try:
 
