@@ -1,4 +1,4 @@
-```python
+
 import os
 
 from telegram import ReplyKeyboardMarkup, Update
@@ -206,4 +206,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-```
