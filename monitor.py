@@ -1,17 +1,24 @@
 import asyncio
 
 from fxcm import get_price
+
 from database import (
     get_active_alerts,
     disable_alert
 )
 
 
-telegram_bot=None
+telegram_bot = None
 
 
 
-async def send_alert(user_id,message):
+def set_bot(bot):
+    global telegram_bot
+    telegram_bot = bot
+
+
+
+async def send_alert(user_id, message):
 
     if telegram_bot:
 
@@ -24,34 +31,54 @@ async def send_alert(user_id,message):
 
 async def check_alerts():
 
-    alerts=get_active_alerts()
+    alerts = get_active_alerts()
 
 
     for alert in alerts:
 
-        alert_id=alert[0]
-        user_id=alert[1]
-        symbol=alert[2]
-        target=alert[3]
+        alert_id = alert[0]
+        user_id = alert[1]
+        symbol = alert[2]
+        target = float(alert[3])
+        direction = alert[4]
 
 
         try:
 
-            price=get_price(symbol)
+            price = get_price(symbol)
 
-            current=float(
+            current = float(
                 price["bid"]
             )
 
 
-            if current >= float(target):
+            hit = False
+
+
+            if direction == "UP":
+
+                if current >= target:
+                    hit = True
+
+
+            elif direction == "DOWN":
+
+                if current <= target:
+                    hit = True
+
+
+
+            if hit:
+
 
                 await send_alert(
                     user_id,
+
                     f"""
 🚨 PRICE ALERT HIT
 
-Pair: {symbol}
+Symbol:
+{symbol}
 
 Target:
 {target}
