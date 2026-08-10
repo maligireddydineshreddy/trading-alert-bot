@@ -636,78 +636,77 @@ async def menu_handler(
     # SYMBOL SELECTED
     # ==================================================
 
-
-elif text in HOT_SYMBOLS:
-
-
-    context.user_data["symbol"] = text
+    elif text in HOT_SYMBOLS:
 
 
-    price_keyboard = [
-
-        ["⬅️ Back"]
-
-    ]
+        context.user_data["symbol"] = text
 
 
-    # ==========================
-    # SHOW CURRENT PRICE
-    # ==========================
+        price_keyboard = [
+
+            ["⬅️ Back"]
+
+        ]
 
 
-    if text.endswith("USDT"):
+        # ==========================
+        # SHOW CURRENT PRICE
+        # ==========================
 
 
-        data = get_crypto_price(text)
+        if text.endswith("USDT"):
 
 
-        price_message = (
+            data = get_crypto_price(text)
 
-            f"📊 {text} Selected\n\n"
 
-            f"💰 Current Price:\n"
-            f"{float(data['price']):.2f}\n\n"
+            price_message = (
 
-            "Enter target price:"
+                f"📊 {text} Selected\n\n"
+
+                f"💰 Current Price:\n"
+                f"{float(data['price']):.2f}\n\n"
+
+                "Enter target price:"
+
+            )
+
+
+        else:
+
+
+            data = get_price(text)
+
+
+            price_message = (
+
+                f"📊 {text} Selected\n\n"
+
+                f"📈 Current Bid:\n"
+                f"{float(data['bid']):.5f}\n\n"
+
+                f"📉 Current Ask:\n"
+                f"{float(data['ask']):.5f}\n\n"
+
+                "Enter target price:"
+
+            )
+
+
+
+        await update.message.reply_text(
+
+            price_message,
+
+            reply_markup=ReplyKeyboardMarkup(
+
+                price_keyboard,
+
+                resize_keyboard=True
+
+            )
 
         )
-
-
-    else:
-
-
-        data = get_price(text)
-
-
-        price_message = (
-
-            f"📊 {text} Selected\n\n"
-
-            f"📈 Current Bid:\n"
-            f"{float(data['bid']):.5f}\n\n"
-
-            f"📉 Current Ask:\n"
-            f"{float(data['ask']):.5f}\n\n"
-
-            "Enter target price:"
-
-        )
-
-
-
-    await update.message.reply_text(
-
-        price_message,
-
-        reply_markup=ReplyKeyboardMarkup(
-
-            price_keyboard,
-
-            resize_keyboard=True
-
-        )
-
-    )
 
 
 
