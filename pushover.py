@@ -5,14 +5,20 @@ import requests
 PUSHOVER_APP_TOKEN = os.getenv("PUSHOVER_APP_TOKEN")
 
 
+
 def send_pushover(user_key, title, message):
 
     if not PUSHOVER_APP_TOKEN:
-        print("❌ PUSHOVER_APP_TOKEN missing", flush=True)
+        print(
+            "❌ PUSHOVER_APP_TOKEN missing",
+            flush=True
+        )
         return None
 
 
+
     url = "https://api.pushover.net/1/messages.json"
+
 
 
     data = {
@@ -30,14 +36,15 @@ def send_pushover(user_key, title, message):
         "priority": 2,
 
 
-        # Repeat every 20 seconds
+        # Minimum allowed by Pushover
         "retry": 30,
 
 
-        # Stop repeating after 10 minutes
+        # 10 minutes
         "expire": 600
 
     }
+
 
 
     try:
@@ -49,11 +56,13 @@ def send_pushover(user_key, title, message):
         )
 
 
+
         print(
             "Pushover Status:",
             response.status_code,
             flush=True
         )
+
 
 
         print(
@@ -63,10 +72,13 @@ def send_pushover(user_key, title, message):
         )
 
 
+
         return response.json()
 
 
+
     except Exception as e:
+
 
         print(
             "Pushover Error:",
@@ -74,4 +86,42 @@ def send_pushover(user_key, title, message):
             flush=True
         )
 
+
         return None
+
+
+
+
+
+# ==================================
+# VALIDATE PUSHOVER USER KEY
+# ==================================
+
+def validate_pushover_key(user_key):
+
+
+    result = send_pushover(
+
+        user_key,
+
+        "🔧 Pushover Setup",
+
+        "✅ Your Trading Alert bot is connected."
+
+    )
+
+
+
+    if not result:
+
+        return False
+
+
+
+    if result.get("status") == 1:
+
+        return True
+
+
+
+    return False
