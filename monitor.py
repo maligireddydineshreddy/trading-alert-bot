@@ -121,20 +121,20 @@ async def send_alert(user_id, message):
 
     if pushover_key:
 
-    try:
+        try:
 
-        send_pushover(
-            pushover_key,
-            "🚨 Trading Alert",
-            message
-        )
+            send_pushover(
+                pushover_key,
+                "🚨 Trading Alert",
+                message
+            )
 
-    except Exception as e:
+        except Exception as e:
 
-        print(
-            f"Pushover error: {e}",
-            flush=True
-        )
+            print(
+                f"Pushover error: {e}",
+                flush=True
+            )
 
 
 
