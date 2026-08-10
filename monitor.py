@@ -37,6 +37,59 @@ def set_bot(bot):
 
 
 # ==========================
+# PRICE FORMATTER
+# ==========================
+
+
+def format_price(symbol, price):
+
+    symbol = symbol.upper()
+
+
+    # ======================
+    # CRYPTO
+    # ======================
+
+    if symbol.endswith("USDT"):
+
+        return f"{price:.2f}"
+
+
+
+    # ======================
+    # COMMODITIES
+    # ======================
+
+    elif symbol in [
+
+        "XAUUSD",
+        "XAGUSD",
+        "USOIL",
+        "COPPER"
+
+    ]:
+
+        return f"{price:.3f}"
+
+
+
+    # ======================
+    # FOREX
+    # ======================
+
+    else:
+
+        return f"{price:.5f}"
+
+
+
+
+
+
+
+
+
+# ==========================
 # SEND ALERT
 # ==========================
 
@@ -54,6 +107,8 @@ async def send_alert(user_id, message):
             text=message
 
         )
+
+
 
 
 
@@ -84,9 +139,11 @@ def get_current_price(symbol):
         data = get_crypto_price(symbol)
 
 
-        return float(
+        return round(
 
-            data["price"]
+            float(data["price"]),
+
+            2
 
         )
 
@@ -115,6 +172,7 @@ def get_current_price(symbol):
             "ask": float(data["ask"])
 
         }
+
 
 
 
@@ -156,14 +214,16 @@ async def check_alerts():
         try:
 
 
+
             current = get_current_price(symbol)
 
 
 
 
 
+
             # ======================
-            # PRINT LIVE PRICE
+            # LIVE LOG
             # ======================
 
 
@@ -172,11 +232,16 @@ async def check_alerts():
 
                 print(
 
-                    f"{symbol} | Bid: {current['bid']} | Ask: {current['ask']} | Target: {target} | Direction: {direction}",
+                    f"{symbol} | "
+                    f"Bid: {format_price(symbol,current['bid'])} | "
+                    f"Ask: {format_price(symbol,current['ask'])} | "
+                    f"Target: {format_price(symbol,target)} | "
+                    f"Direction: {direction}",
 
                     flush=True
 
                 )
+
 
 
             else:
@@ -184,7 +249,10 @@ async def check_alerts():
 
                 print(
 
-                    f"{symbol} | Price: {current} | Target: {target} | Direction: {direction}",
+                    f"{symbol} | "
+                    f"Price: {format_price(symbol,current)} | "
+                    f"Target: {format_price(symbol,target)} | "
+                    f"Direction: {direction}",
 
                     flush=True
 
@@ -198,7 +266,7 @@ async def check_alerts():
 
 
             # ======================
-            # DIRECTION LOGIC
+            # TARGET CHECK
             # ======================
 
 
@@ -208,8 +276,9 @@ async def check_alerts():
 
 
 
+
             # ======================
-            # FXCM BID / ASK
+            # FXCM
             # ======================
 
 
@@ -223,14 +292,15 @@ async def check_alerts():
 
 
 
-                # Price moving upward
+
+                # BUY SIDE
+                # price going UP
 
                 if direction == "ABOVE":
 
 
-                    # Ask hits target
-
                     if ask >= target:
+
 
                         hit = True
 
@@ -239,14 +309,14 @@ async def check_alerts():
 
 
 
-                # Price moving downward
+                # SELL SIDE
+                # price going DOWN
 
                 elif direction == "BELOW":
 
 
-                    # Bid hits target
-
                     if bid <= target:
+
 
                         hit = True
 
@@ -265,11 +335,11 @@ async def check_alerts():
             else:
 
 
-
                 if direction == "ABOVE":
 
 
                     if current >= target:
+
 
                         hit = True
 
@@ -282,6 +352,7 @@ async def check_alerts():
 
                     if current <= target:
 
+
                         hit = True
 
 
@@ -290,8 +361,10 @@ async def check_alerts():
 
 
 
+
+
             # ======================
-            # ALERT TRIGGER
+            # SEND ALERT
             # ======================
 
 
@@ -301,19 +374,21 @@ async def check_alerts():
 
                 if isinstance(current, dict):
 
-                    display_price = current["ask"]
+
+                    alert_price = current["ask"]
 
 
                 else:
 
-                    display_price = current
 
+                    alert_price = current
 
 
 
 
 
                 await send_alert(
+
 
                     user_id,
 
@@ -331,22 +406,24 @@ async def check_alerts():
 
 
 🎯 Target:
-{target}
+{format_price(symbol,target)}
 
 
 💰 Current Price:
-{display_price}
+{format_price(symbol,alert_price)}
 
 
 ✅ Alert Completed
-
 """
 
                 )
 
 
 
+
+
                 disable_alert(alert_id)
+
 
 
 
