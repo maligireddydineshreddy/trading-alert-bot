@@ -244,3 +244,40 @@ def disable_pushover(telegram_id):
 
     conn.commit()
     conn.close()
+
+# ==========================
+# DISABLE PUSHOVER
+# ==========================
+
+def disable_pushover(user_id):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE users
+        SET pushover_enabled = 0
+        WHERE telegram_id = ?
+    """, (user_id,))
+
+    conn.commit()
+    conn.close()
+
+# ==========================
+# ENABLE PUSHOVER
+# ==========================
+
+def enable_pushover(user_id):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE users
+        SET pushover_enabled = 1
+        WHERE telegram_id = ?
+    """, (user_id,))
+
+    conn.commit()
+    conn.close()
+
