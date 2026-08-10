@@ -1,7 +1,8 @@
 import sqlite3
+import os
 
 
-DB_NAME = "alerts.db"
+DB_NAME = "/app/data/alerts.db"
 
 
 
