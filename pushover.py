@@ -8,10 +8,7 @@ PUSHOVER_APP_TOKEN = os.getenv("PUSHOVER_APP_TOKEN")
 def send_pushover(user_key, title, message):
 
     if not PUSHOVER_APP_TOKEN:
-        print(
-            "❌ PUSHOVER_APP_TOKEN missing",
-            flush=True
-        )
+        print("❌ PUSHOVER_APP_TOKEN missing", flush=True)
         return None
 
 
@@ -20,41 +17,29 @@ def send_pushover(user_key, title, message):
 
     data = {
 
-        # Your Pushover application token
         "token": PUSHOVER_APP_TOKEN,
 
-
-        # User's Pushover key
         "user": user_key,
 
-
-        # Notification content
         "title": title,
+
         "message": message,
 
 
-        # ==========================
-        # EMERGENCY ALERT
-        # ==========================
-
+        # Emergency priority
         "priority": 2,
 
 
-        # Repeat every 60 seconds
-        # until acknowledged
-        "retry": 5,
+        # Repeat alert every 60 seconds
+        "retry": 60,
 
 
         # Stop after 1 hour
-        "expire": 600,
+        "expire": 3600,
 
 
-        # ==========================
-        # SOUND
-        # ==========================
-
-        "sound": "alien"
-
+        # Your selected sound
+        "sound": "alien_alarm"
 
     }
 
@@ -64,22 +49,25 @@ def send_pushover(user_key, title, message):
         response = requests.post(
             url,
             data=data,
-            timeout=10
+            timeout=15
         )
 
 
-        result = response.json()
-
-
         print(
-            "Pushover Response:",
-            result,
+            "Pushover Status:",
+            response.status_code,
             flush=True
         )
 
 
-        return result
+        print(
+            "Pushover Response:",
+            response.text,
+            flush=True
+        )
 
+
+        return response.json()
 
 
     except Exception as e:
