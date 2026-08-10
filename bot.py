@@ -499,7 +499,13 @@ async def menu_handler(
 
     user_id = update.message.from_user.id
 
-        if context.user_data.get("waiting_for_pushover_key"):
+
+
+    # ==================================================
+    # PUSHOVER KEY INPUT
+    # ==================================================
+
+    if context.user_data.get("waiting_for_pushover_key"):
 
         key = text.strip()
 
@@ -1276,7 +1282,7 @@ Choose an option:
         if not key:
 
             await update.message.reply_text(
-                "❌ No Pushover key saved.\nUse /setpush first."
+                "❌ Pushover is not connected.\nPlease enter your Pushover Key from Notification Settings."
             )
             return
 
@@ -1332,12 +1338,7 @@ Choose an option:
 
 
 
-    elif text == "ℹ️ Status":
 
-        await system_status(
-            update,
-            context
-        )
 
 # ==================================================
 # STATUS BUTTON
