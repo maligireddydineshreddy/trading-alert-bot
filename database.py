@@ -231,19 +231,31 @@ def get_pushover_key(telegram_id):
 
 
 
-def disable_pushover(telegram_id):
+# ==========================
+# CHECK PUSHOVER STATUS
+# ==========================
+
+def get_pushover_status(user_id):
 
     conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
-        UPDATE users
-        SET pushover_enabled = 0
+        SELECT pushover_enabled
+        FROM users
         WHERE telegram_id = ?
-    """, (telegram_id,))
+    """, (user_id,))
 
-    conn.commit()
+    result = cursor.fetchone()
+
     conn.close()
+
+    if result:
+        return result[0]
+
+    return 0
+
+
 
 # ==========================
 # DISABLE PUSHOVER
