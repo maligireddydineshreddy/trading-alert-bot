@@ -357,41 +357,29 @@ async def system_status(
     # ==========================
 
     try:
-
-
         response = requests.get(
-
             "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT",
-
-            timeout=5
-
+            timeout=10
         )
 
+        response.raise_for_status()
 
         data = response.json()
-
-
-        btc_price = data["price"]
-
+        btc_price = float(data["price"])
 
         binance_status = (
-
             "🟢 Binance: Connected\n"
-            f"₿ BTCUSDT: {format_market_price('BTCUSDT', btc_price)}"
-
-
+            f"₿ BTCUSDT: ${btc_price:,.2f}"
         )
 
-
-
-    except Exception:
-
-
-        binance_status = (
-
-            "🔴 Binance: Disconnected"
-
+    except Exception as error:
+        print(
+            f"Binance status check failed: "
+            f"{type(error).__name__}: {error}",
+            flush=True
         )
+
+        binance_status = "🔴 Binance: Disconnected"
 
 
 
