@@ -8,8 +8,11 @@ from crypto import get_crypto_price
 
 from database import (
     get_active_alerts,
-    disable_alert
+    disable_alert,
+    get_pushover_key
 )
+
+from pushover import send_pushover
 
 
 
@@ -97,15 +100,31 @@ def format_price(symbol, price):
 async def send_alert(user_id, message):
 
 
+    # ==========================
+    # TELEGRAM
+    # ==========================
+
     if telegram_bot:
 
-
         await telegram_bot.send_message(
-
             chat_id=user_id,
-
             text=message
+        )
 
+
+    # ==========================
+    # PUSHOVER
+    # ==========================
+
+    pushover_key = get_pushover_key(user_id)
+
+
+    if pushover_key:
+
+        send_pushover(
+            pushover_key,
+            "🚨 Trading Alert",
+            message
         )
 
 
