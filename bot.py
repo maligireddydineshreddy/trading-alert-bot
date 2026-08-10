@@ -29,7 +29,12 @@ from database import (
     init_db,
     add_alert,
     get_user_alerts,
-    remove_multiple_alerts
+    remove_multiple_alerts,
+    get_pushover_key,
+    get_pushover_status,
+    disable_pushover,
+    enable_pushover,
+    save_pushover_key
 )
 
 
@@ -122,7 +127,7 @@ main_menu = [
 
     ["📈 Add Alert", "📋 My Alerts"],
 
-    ["🗑 Remove Alert"],
+    ["🗑 Remove Alert","🔔 Notification "],
 
     ["ℹ️ Status"]
 
@@ -154,6 +159,17 @@ market_menu = [
 
 
 
+notification_menu = [
+
+    ["🔑 Change Pushover Key"],
+
+    ["🧪 Test Notification"],
+
+    ["❌ Disable Pushover"],
+
+    ["⬅️ Back"]
+
+]
 
 
 # ==================================================
