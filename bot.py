@@ -573,20 +573,6 @@ async def menu_handler(
         return
 
 
-        await update.message.reply_text(
-
-            "✅ Pushover Connected\n\n"
-            "🚨 Emergency alerts enabled",
-
-            reply_markup=ReplyKeyboardMarkup(
-                main_menu,
-                resize_keyboard=True
-            )
-
-        )
-
-        return
-
 
 
 
