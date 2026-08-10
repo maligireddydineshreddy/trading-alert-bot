@@ -161,13 +161,22 @@ market_menu = [
 
 
 
-notification_menu = [
+notification_menu_connected = [
 
-    ["🔑 Change Pushover Key"],
+    ["🧪 Test Alert"],
 
-    ["🧪 Test Notification"],
+    ["🔄 Change User Key"],
 
     ["❌ Disable Pushover"],
+
+    ["⬅️ Back"]
+
+]
+
+
+notification_menu_disabled = [
+
+    ["🔑 Enter Pushover Key"],
 
     ["⬅️ Back"]
 
@@ -489,6 +498,42 @@ async def menu_handler(
     text = update.message.text
 
     user_id = update.message.from_user.id
+
+        if context.user_data.get("waiting_for_pushover_key"):
+
+        key = text.strip()
+
+
+        save_pushover_key(
+            user_id,
+            key
+        )
+
+
+        enable_pushover(
+            user_id
+        )
+
+
+        context.user_data.pop(
+            "waiting_for_pushover_key",
+            None
+        )
+
+
+        await update.message.reply_text(
+
+            "✅ Pushover Connected\n\n"
+            "🚨 Emergency alerts enabled",
+
+            reply_markup=ReplyKeyboardMarkup(
+                main_menu,
+                resize_keyboard=True
+            )
+
+        )
+
+        return
 
 
 
@@ -1165,28 +1210,54 @@ async def menu_handler(
 
         if status == 1:
 
-            pushover_status = "🟢 Pushover Enabled"
+            message = """
+🔔 Notification Settings
+
+
+Pushover:
+✅ Connected
+
+
+Emergency Alerts:
+🚨 Enabled
+
+
+Choose an option:
+"""
+
+
+            keyboard = notification_menu_connected
+
 
         else:
 
-            pushover_status = "🔴 Pushover Disabled"
+            message = """
+🔔 Notification Settings
+
+
+Pushover:
+❌ Not Connected
+
+
+Emergency Alerts:
+OFF
+
+
+Choose an option:
+"""
+
+
+            keyboard = notification_menu_disabled
+
 
 
         await update.message.reply_text(
 
-            f"""
-🔔 Notification Settings
-
-
-{pushover_status}
-
-
-Choose an option:
-""",
+            message,
 
             reply_markup=ReplyKeyboardMarkup(
 
-                notification_menu,
+                keyboard,
 
                 resize_keyboard=True
 
@@ -1198,7 +1269,7 @@ Choose an option:
 # NOTIFICATION MENU ACTIONS
 # ==================================================
 
-    elif text == "🧪 Test Notification":
+    elif text == "🧪 Test Alert":
 
         key = get_pushover_key(user_id)
 
@@ -1244,15 +1315,20 @@ Choose an option:
 
 
 
-    elif text == "🔑 Change Pushover Key":
+    elif text in [
+           "🔑 Enter Pushover Key",
+           "🔄 Change User Key"
+    ]:
 
-        await update.message.reply_text(
+           context.user_data["waiting_for_pushover_key"] = True
 
-            "Send your new Pushover User Key:\n\n"
-            "Example:\n"
-            "/setpush your_key_here"
 
-        )
+           await update.message.reply_text(
+
+              "🔑 Enter your Pushover User Key:\n\n"
+              "Paste the key here."
+
+         )
 
 
 
