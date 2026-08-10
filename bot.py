@@ -637,35 +637,77 @@ async def menu_handler(
     # ==================================================
 
 
-    elif text in HOT_SYMBOLS:
+elif text in HOT_SYMBOLS:
 
 
-        context.user_data["symbol"] = text
+    context.user_data["symbol"] = text
 
 
+    price_keyboard = [
 
-        price_keyboard = [
+        ["⬅️ Back"]
 
-            ["⬅️ Back"]
-
-        ]
-
+    ]
 
 
-        await update.message.reply_text(
+    # ==========================
+    # SHOW CURRENT PRICE
+    # ==========================
+
+
+    if text.endswith("USDT"):
+
+
+        data = get_crypto_price(text)
+
+
+        price_message = (
 
             f"📊 {text} Selected\n\n"
-            "Enter target price:",
 
-            reply_markup=ReplyKeyboardMarkup(
+            f"💰 Current Price:\n"
+            f"{float(data['price']):.2f}\n\n"
 
-                price_keyboard,
-
-                resize_keyboard=True
-
-            )
+            "Enter target price:"
 
         )
+
+
+    else:
+
+
+        data = get_price(text)
+
+
+        price_message = (
+
+            f"📊 {text} Selected\n\n"
+
+            f"📈 Current Bid:\n"
+            f"{float(data['bid']):.5f}\n\n"
+
+            f"📉 Current Ask:\n"
+            f"{float(data['ask']):.5f}\n\n"
+
+            "Enter target price:"
+
+        )
+
+
+
+    await update.message.reply_text(
+
+        price_message,
+
+        reply_markup=ReplyKeyboardMarkup(
+
+            price_keyboard,
+
+            resize_keyboard=True
+
+        )
+
+    )
 
 
 
