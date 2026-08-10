@@ -42,11 +42,11 @@ def send_pushover(user_key, title, message):
 
         # Repeat every 60 seconds
         # until acknowledged
-        "retry": 60,
+        "retry": 5,
 
 
         # Stop after 1 hour
-        "expire": 3600,
+        "expire": 600,
 
 
         # ==========================
