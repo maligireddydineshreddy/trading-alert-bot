@@ -13,6 +13,10 @@ from telegram import (
     Update
 )
 
+from pushover import (
+    send_pushover,
+    validate_pushover_key
+)
 
 from telegram.ext import (
     Application,
@@ -510,21 +514,63 @@ async def menu_handler(
         key = text.strip()
 
 
-        save_pushover_key(
-            user_id,
-            key
+        await update.message.reply_text(
+            "🔄 Validating Pushover key..."
         )
 
 
-        enable_pushover(
-            user_id
-        )
+        valid = validate_pushover_key(key)
 
 
-        context.user_data.pop(
-            "waiting_for_pushover_key",
-            None
-        )
+
+        if valid:
+
+
+            save_pushover_key(
+                user_id,
+                key
+            )
+
+
+            enable_pushover(
+                user_id
+            )
+
+
+
+            context.user_data.pop(
+                "waiting_for_pushover_key",
+                None
+            )
+
+
+
+            await update.message.reply_text(
+
+                "✅ Pushover Connected\n\n"
+                "🚨 Emergency alerts enabled",
+
+                reply_markup=ReplyKeyboardMarkup(
+                    main_menu,
+                    resize_keyboard=True
+                )
+
+            )
+
+
+
+        else:
+
+
+            await update.message.reply_text(
+
+                "❌ Invalid Pushover User Key\n\n"
+                "Please check your key and try again."
+
+            )
+
+
+        return
 
 
         await update.message.reply_text(
