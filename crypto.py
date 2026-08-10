@@ -4,13 +4,11 @@ from binance.client import Client
 client = Client()
 
 
-
 # ==========================
 # HOT BUTTON CRYPTO
 # ==========================
 
 COMMON_CRYPTO = [
-
     "BTCUSDT",
     "ETHUSDT",
     "SOLUSDT",
@@ -18,102 +16,52 @@ COMMON_CRYPTO = [
 
     # Backend only
     "BNBUSDT"
-
 ]
-
-
-
 
 
 # ==========================
 # GET CRYPTO PRICE
 # ==========================
 
-
 def get_crypto_price(symbol):
-
-
     symbol = symbol.upper()
 
-
-
     try:
-
-
-        ticker = client.get_symbol_ticker(
-
-            symbol=symbol
-
-        )
-
+        ticker = client.get_symbol_ticker(symbol=symbol)
 
         return {
-
-
             "symbol": symbol,
-
-
-            "price": float(
-
-                ticker["price"]
-
-            )
-
+            "price": float(ticker["price"])
         }
 
-
-
-    except Exception:
-
-
-        raise Exception(
-
-            "Crypto symbol not supported"
-
+    except Exception as error:
+        print(
+            f"Binance price request failed for {symbol}: "
+            f"{type(error).__name__}: {error}",
+            flush=True
         )
 
-
-
-
+        raise Exception("Crypto price is temporarily unavailable")
 
 
 # ==========================
 # VALIDATE CRYPTO
 # ==========================
 
-
 def validate_crypto(symbol):
-
-
     symbol = symbol.upper()
 
-
-
-    # Fast check for common coins
-
     if symbol in COMMON_CRYPTO:
-
         return True
-
-
-
-    # Binance API check for any coin
 
     try:
-
-
-        client.get_symbol_ticker(
-
-            symbol=symbol
-
-        )
-
-
+        client.get_symbol_ticker(symbol=symbol)
         return True
 
-
-
-    except Exception:
-
-
+    except Exception as error:
+        print(
+            f"Binance symbol validation failed for {symbol}: "
+            f"{type(error).__name__}: {error}",
+            flush=True
+        )
         return False
