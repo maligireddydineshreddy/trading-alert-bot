@@ -182,7 +182,7 @@ indices_menu = [
 
     ["SPX500", "NAS100"],
 
-    ["US30", "US100"],
+    ["US30"],
 
     ["✏️ Enter Index"],
 
