@@ -1,5 +1,6 @@
 import requests
 from datetime import datetime
+from zoneinfo import ZoneInfo
 import os
 import asyncio
 
@@ -367,11 +368,13 @@ async def system_status(
     # TIME
     # ==========================
 
-    current_time = datetime.now().strftime(
+   ist_time = datetime.now(
+       ZoneInfo("Asia/Kolkata")
+   )
 
-        "%d-%m-%Y %H:%M:%S"
-
-    )
+   current_time = ist_time.strftime(
+       "%d-%m-%Y %H:%M:%S"
+   )
 
 
 
