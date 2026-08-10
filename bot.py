@@ -213,9 +213,7 @@ commodity_menu = [
 
 indices_menu = [
 
-    ["SPX500", "NAS100"],
-
-    ["US30"],
+    ["SPX500", "US30"],
 
     ["✏️ Enter Index"],
 
@@ -256,7 +254,6 @@ HOT_SYMBOLS = [
 
 
     "SPX500",
-    "NAS100",
     "US30"
     
 ]
