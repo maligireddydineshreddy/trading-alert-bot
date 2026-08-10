@@ -162,16 +162,4 @@ def validate_pushover_key(user_key):
 
 
 
-    if not result:
 
-        return False
-
-
-
-    if result.get("status") == 1:
-
-        return True
-
-
-
-    return False
