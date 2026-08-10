@@ -56,7 +56,40 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 
 
+def format_market_price(symbol, price):
 
+    symbol = symbol.upper()
+
+
+    # Crypto
+    if symbol.endswith("USDT"):
+
+        return f"{price:.2f}"
+
+
+    # Commodities
+    if symbol in [
+        "XAUUSD",
+        "XAGUSD",
+        "USOIL",
+        "COPPER"
+    ]:
+
+        return f"{price:.2f}"
+
+
+    # Indices
+    if symbol in [
+        "SPX500",
+        "NAS100",
+        "US30"
+    ]:
+
+        return f"{price:.2f}"
+
+
+    # Forex
+    return f"{price:.5f}"
 
 # ==================================================
 # MAIN MENU
@@ -224,9 +257,8 @@ HOT_SYMBOLS = [
 
     "SPX500",
     "NAS100",
-    "US30",
-    "US100"
-
+    "US30"
+    
 ]
 
 
@@ -664,8 +696,11 @@ async def menu_handler(
 
                 f"📊 {text} Selected\n\n"
 
-                f"💰 Current Price:\n"
-                f"{float(data['price']):.2f}\n\n"
+                f"📈 Current Bid:\n"
+                f"{format_market_price(text, float(data['bid']))}\n\n"
+
+                f"📉 Current Ask:\n"
+                f"{format_market_price(text, float(data['ask']))}\n\n"
 
                 "Enter target price:"
 
