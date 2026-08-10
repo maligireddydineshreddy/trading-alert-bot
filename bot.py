@@ -816,7 +816,64 @@ async def menu_handler(
                 "AUDUSD\nEURJPY"
 
             )
+    # ==================================================
+    # CUSTOM SYMBOL INPUT
+    # ==================================================
 
+    elif context.user_data.get("custom_symbol"):
+
+        symbol = text.upper().replace("/", "").replace(" ", "")
+
+        try:
+
+            context.user_data["symbol"] = symbol
+            context.user_data.pop("custom_symbol", None)
+
+            if symbol.endswith("USDT"):
+
+                data = get_crypto_price(symbol)
+                current_price = float(data["price"])
+
+                price_message = (
+                    f"📊 {symbol} Selected\n\n"
+                    f"💰 Current Price:\n"
+                    f"{format_market_price(symbol, current_price)}\n\n"
+                    "Enter target price:"
+                )
+
+            else:
+
+                data = get_price(symbol)
+
+                bid = float(data["bid"])
+                ask = float(data["ask"])
+
+                price_message = (
+                    f"📊 {symbol} Selected\n\n"
+                    f"📈 Current Bid:\n"
+                    f"{format_market_price(symbol, bid)}\n\n"
+                    f"📉 Current Ask:\n"
+                    f"{format_market_price(symbol, ask)}\n\n"
+                    "Enter target price:"
+                )
+
+            await update.message.reply_text(
+                price_message,
+                reply_markup=ReplyKeyboardMarkup(
+                    [["⬅️ Back"]],
+                    resize_keyboard=True
+                )
+            )
+
+        except Exception:
+
+            context.user_data.pop("symbol", None)
+
+            await update.message.reply_text(
+                f"❌ Symbol not available: {symbol}\n\n"
+                "Please check the symbol and try again."
+            )
+            
 # ==================================================
 # MY ALERTS
 # ==================================================
