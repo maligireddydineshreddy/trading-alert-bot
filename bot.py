@@ -690,18 +690,16 @@ async def menu_handler(
 
 
             data = get_crypto_price(text)
+            current_price = float(data["price"])
 
 
             price_message = (
 
                 f"📊 {text} Selected\n\n"
 
-                f"📈 Current Bid:\n"
-                f"{format_market_price(text, float(data['bid']))}\n\n"
+                f"💰 Current Price:\n"
 
-                f"📉 Current Ask:\n"
-                f"{format_market_price(text, float(data['ask']))}\n\n"
-
+                f"{format_market_price(text, current_price)}\n\n"
                 "Enter target price:"
 
             )
