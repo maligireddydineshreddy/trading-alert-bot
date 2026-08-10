@@ -108,11 +108,13 @@ def get_current_price(symbol):
         data = get_price(symbol)
 
 
-        return float(
+        return {
 
-            data["bid"]
+            "bid": float(data["bid"]),
 
-        )
+            "ask": float(data["ask"])
+
+        }
 
 
 
@@ -160,13 +162,35 @@ async def check_alerts():
 
 
 
-            print(
+            # ======================
+            # PRINT LIVE PRICE
+            # ======================
 
-                f"{symbol} | Current: {current} | Target: {target} | Direction: {direction}",
 
-                flush=True
+            if isinstance(current, dict):
 
-            )
+
+                print(
+
+                    f"{symbol} | Bid: {current['bid']} | Ask: {current['ask']} | Target: {target} | Direction: {direction}",
+
+                    flush=True
+
+                )
+
+
+            else:
+
+
+                print(
+
+                    f"{symbol} | Price: {current} | Target: {target} | Direction: {direction}",
+
+                    flush=True
+
+                )
+
+
 
 
 
@@ -184,30 +208,82 @@ async def check_alerts():
 
 
 
-            # Price moving upward
-
-            if direction == "ABOVE":
-
-
-                if current >= target:
+            # ======================
+            # FXCM BID / ASK
+            # ======================
 
 
-                    hit = True
+            if isinstance(current, dict):
+
+
+                bid = current["bid"]
+
+                ask = current["ask"]
+
+
+
+
+                # Price moving upward
+
+                if direction == "ABOVE":
+
+
+                    # Ask hits target
+
+                    if ask >= target:
+
+                        hit = True
 
 
 
 
 
 
-            # Price moving downward
+                # Price moving downward
 
-            elif direction == "BELOW":
-
-
-                if current <= target:
+                elif direction == "BELOW":
 
 
-                    hit = True
+                    # Bid hits target
+
+                    if bid <= target:
+
+                        hit = True
+
+
+
+
+
+
+
+
+            # ======================
+            # CRYPTO
+            # ======================
+
+
+            else:
+
+
+
+                if direction == "ABOVE":
+
+
+                    if current >= target:
+
+                        hit = True
+
+
+
+
+
+                elif direction == "BELOW":
+
+
+                    if current <= target:
+
+                        hit = True
+
 
 
 
@@ -220,6 +296,20 @@ async def check_alerts():
 
 
             if hit:
+
+
+
+                if isinstance(current, dict):
+
+                    display_price = current["ask"]
+
+
+                else:
+
+                    display_price = current
+
+
+
 
 
 
@@ -245,7 +335,7 @@ async def check_alerts():
 
 
 💰 Current Price:
-{current}
+{display_price}
 
 
 ✅ Alert Completed
