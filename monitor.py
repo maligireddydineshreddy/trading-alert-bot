@@ -374,13 +374,13 @@ async def check_alerts():
 
                 if isinstance(current, dict):
 
+                    if direction == "BELOW":
+                        alert_price = current["bid"]
 
-                    alert_price = current["ask"]
-
+                    else:
+                        alert_price = current["ask"]
 
                 else:
-
-
                     alert_price = current
 
 
