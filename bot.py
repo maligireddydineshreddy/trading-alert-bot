@@ -365,16 +365,16 @@ async def system_status(
 
 
     # ==========================
-    # TIME
+    # TIME (IST)
     # ==========================
 
-   ist_time = datetime.now(
-       ZoneInfo("Asia/Kolkata")
-   )
+    ist_time = datetime.now(
+        ZoneInfo("Asia/Kolkata")
+    )
 
-   current_time = ist_time.strftime(
-       "%d-%m-%Y %H:%M:%S"
-   )
+    current_time = ist_time.strftime(
+        "%d-%m-%Y %H:%M:%S"
+    )
 
 
 
