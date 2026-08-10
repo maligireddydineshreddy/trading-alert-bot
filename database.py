@@ -5,6 +5,20 @@ import sqlite3
 DATA_DIR = "/app/data"
 DB_NAME = f"{DATA_DIR}/trading_alerts_20260810.db"
 
+def init_users():
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        telegram_id INTEGER PRIMARY KEY,
+        pushover_user_key TEXT,
+        pushover_enabled INTEGER DEFAULT 0
+    )
+    """)
+
+    conn.commit()
+    conn.close()
 
 def get_connection():
     # Safe locally; on Railway, /app/data must be the mounted volume.
@@ -48,6 +62,9 @@ def init_db():
 
     conn.commit()
     conn.close()
+    
+    # Create user notification settings table
+    init_users()
 
 
 # ==========================
@@ -162,3 +179,68 @@ def remove_multiple_alerts(alert_ids):
 
 def disable_alert(alert_id):
     remove_alert(alert_id)
+
+
+# ==========================
+# PUSHOVER SETTINGS
+# ==========================
+
+def save_pushover_key(telegram_id, user_key):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT OR REPLACE INTO users
+        (
+            telegram_id,
+            pushover_user_key,
+            pushover_enabled
+        )
+        VALUES (?, ?, 1)
+    """, (
+        telegram_id,
+        user_key
+    ))
+
+    conn.commit()
+    conn.close()
+
+
+
+def get_pushover_key(telegram_id):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT pushover_user_key
+        FROM users
+        WHERE telegram_id = ?
+        AND pushover_enabled = 1
+    """, (telegram_id,))
+
+    result = cursor.fetchone()
+
+    conn.close()
+
+    if result:
+        return result[0]
+
+    return None
+
+
+
+def disable_pushover(telegram_id):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE users
+        SET pushover_enabled = 0
+        WHERE telegram_id = ?
+    """, (telegram_id,))
+
+    conn.commit()
+    conn.close()
