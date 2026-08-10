@@ -1363,9 +1363,9 @@ async def save_alert(
 
             f"📊 Symbol: {symbol}\n"
 
-            f"💵 Current: {current_price}\n"
+            f"💵 Current: {format_market_price(symbol, current_price)}\n"
 
-            f"🎯 Target: {target}\n"
+            f"🎯 Target: {format_market_price(symbol, target)}\n"
 
             f"📈 Direction: {direction}\n\n"
 
