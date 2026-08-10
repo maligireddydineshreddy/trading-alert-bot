@@ -1,5 +1,4 @@
 import os
-import time
 
 os.environ["LD_LIBRARY_PATH"] = "/app/forexconnect/lib"
 
@@ -10,11 +9,9 @@ from forexconnect import (
 )
 
 
-
 # ==========================
 # COMMON SYMBOLS
 # ==========================
-
 
 COMMON_FOREX = [
 
@@ -48,7 +45,6 @@ COMMON_FOREX = [
 ]
 
 
-
 COMMON_COMMODITIES = [
 
     "XAUUSD",
@@ -59,18 +55,22 @@ COMMON_COMMODITIES = [
 ]
 
 
+# ==========================
+# SYMBOL MAPPING
+# ==========================
 
+FXCM_SYMBOL_MAP = {
+
+    "US100": "NAS100"
+
+}
 
 
 # ==========================
-# GLOBAL FXCM CONNECTION
+# GLOBAL CONNECTION
 # ==========================
-
 
 fx_connection = None
-
-
-
 
 
 
@@ -78,39 +78,26 @@ fx_connection = None
 # INITIALIZE FXCM
 # ==========================
 
-
 def init_fxcm():
-
 
     global fx_connection
 
 
-
     if fx_connection:
 
-
         print(
-
             "FXCM already connected",
-
             flush=True
-
         )
 
         return
 
 
 
-
-
     print(
-
         "Connecting FXCM...",
-
         flush=True
-
     )
-
 
 
     fx = ForexConnect()
@@ -134,39 +121,26 @@ def init_fxcm():
     fx_connection = fx
 
 
-
     print(
-
         "✅ FXCM Connected",
-
         flush=True
-
     )
 
 
 
 
-
-
-
-
 # ==========================
-# CHECK CONNECTION
+# GET CONNECTION
 # ==========================
-
 
 def get_connection():
-
 
     global fx_connection
 
 
-
     if fx_connection is None:
 
-
         init_fxcm()
-
 
 
     return fx_connection
@@ -174,17 +148,11 @@ def get_connection():
 
 
 
-
-
-
-
 # ==========================
-# GET PRICE
+# NORMALIZE SYMBOL
 # ==========================
 
-
-def get_price(symbol):
-
+def normalize_symbol(symbol):
 
     symbol = (
 
@@ -197,13 +165,35 @@ def get_price(symbol):
     )
 
 
+    return FXCM_SYMBOL_MAP.get(
+
+        symbol,
+
+        symbol
+
+    )
+
+
+
+
+# ==========================
+# GET PRICE
+# ==========================
+
+def get_price(symbol):
+
 
     global fx_connection
 
 
+    original_symbol = symbol
+
+
+    symbol = normalize_symbol(symbol)
+
+
 
     try:
-
 
 
         fx = get_connection()
@@ -215,8 +205,6 @@ def get_price(symbol):
             fxcorepy.O2GTableType.OFFERS
 
         )
-
-
 
 
 
@@ -236,33 +224,30 @@ def get_price(symbol):
 
 
 
-
-
             if fx_symbol == symbol:
 
 
 
                 return {
 
-
                     "symbol": row.instrument,
-
 
                     "bid": row.bid,
 
-
                     "ask": row.ask
-
 
                 }
 
 
 
 
+        # ==========================
+        # SYMBOL DOES NOT EXIST
+        # ==========================
 
         raise Exception(
 
-            f"{symbol} not found"
+            f"{original_symbol} not found"
 
         )
 
@@ -286,68 +271,36 @@ def get_price(symbol):
 
 
 
-        # reconnect once
+        error_text = str(e)
+
+
+
+        # ==========================
+        # INVALID SYMBOL
+        # NO RECONNECT
+        # ==========================
+
+        if "not found" in error_text:
+
+
+            raise Exception(
+
+                error_text
+
+            )
+
+
+
+        # ==========================
+        # CONNECTION ERROR
+        # RECONNECT ONCE
+        # ==========================
 
 
         fx_connection = None
 
 
         init_fxcm()
-
-
-
-        return get_price(symbol)
-
-
-
-
-
-
-
-
-
-# ==========================
-# VALIDATE SYMBOL
-# ==========================
-
-
-def validate_symbol(symbol):
-
-
-    symbol = (
-
-        symbol
-
-        .upper()
-
-        .replace("/", "")
-
-    )
-
-
-
-
-
-    if symbol in COMMON_FOREX:
-
-
-        return True
-
-
-
-
-
-    if symbol in COMMON_COMMODITIES:
-
-
-        return True
-
-
-
-
-
-
-    try:
 
 
 
@@ -360,8 +313,6 @@ def validate_symbol(symbol):
             fxcorepy.O2GTableType.OFFERS
 
         )
-
-
 
 
 
@@ -381,19 +332,92 @@ def validate_symbol(symbol):
 
 
 
+            if fx_symbol == symbol:
+
+
+
+                return {
+
+                    "symbol": row.instrument,
+
+                    "bid": row.bid,
+
+                    "ask": row.ask
+
+                }
+
+
+
+        raise Exception(
+
+            f"{original_symbol} not found"
+
+        )
+
+
+
+
+
+# ==========================
+# VALIDATE SYMBOL
+# ==========================
+
+def validate_symbol(symbol):
+
+
+    symbol = normalize_symbol(symbol)
+
+
+
+    if symbol in COMMON_FOREX:
+
+        return True
+
+
+
+    if symbol in COMMON_COMMODITIES:
+
+        return True
+
+
+
+
+    try:
+
+
+        fx = get_connection()
+
+
+        offers = fx.get_table(
+
+            fxcorepy.O2GTableType.OFFERS
+
+        )
+
+
+
+        for row in offers:
+
+
+            fx_symbol = (
+
+                row.instrument
+
+                .replace("/", "")
+
+                .upper()
+
+            )
+
 
 
             if fx_symbol == symbol:
-
 
                 return True
 
 
 
-
-
     except Exception as e:
-
 
 
         print(
@@ -408,13 +432,7 @@ def validate_symbol(symbol):
 
 
 
-
-
     return False
-
-
-
-
 
 
 
@@ -422,7 +440,6 @@ def validate_symbol(symbol):
 # ==========================
 # CLOSE CONNECTION
 # ==========================
-
 
 def close_fxcm():
 
@@ -436,13 +453,10 @@ def close_fxcm():
 
         try:
 
-
             fx_connection.logout()
 
 
-
         except:
-
 
             pass
 
