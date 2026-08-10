@@ -275,62 +275,105 @@ async def system_status(
     context: ContextTypes.DEFAULT_TYPE
 ):
 
-    # BOT
+    # ==========================
+    # BOT STATUS
+    # ==========================
+
     bot_status = "🟢 Bot: Online"
 
 
-    # FXCM CHECK
+
+    # ==========================
+    # FXCM LIVE CHECK
+    # ==========================
 
     try:
 
         fxcm_check = get_price("EURUSD")
 
+
         if fxcm_check:
 
-            fxcm_status = "🟢 FXCM: Connected"
+            eurusd_price = fxcm_check["bid"]
+
+            fxcm_status = (
+                "🟢 FXCM: Connected\n"
+                f"💱 EURUSD: {eurusd_price}"
+            )
 
         else:
 
-            fxcm_status = "🔴 FXCM: Disconnected"
+            fxcm_status = (
+                "🔴 FXCM: Disconnected"
+            )
 
 
     except Exception:
 
-        fxcm_status = "🔴 FXCM: Disconnected"
 
-
-
-
-    # BINANCE CHECK
-
-    try:
-
-        response = requests.get(
-            "https://api.binance.com/api/v3/ping",
-            timeout=5
+        fxcm_status = (
+            "🔴 FXCM: Disconnected"
         )
 
 
-        if response.status_code == 200:
 
-            binance_status = "🟢 Binance: Connected"
 
-        else:
 
-            binance_status = "🔴 Binance: Disconnected"
+    # ==========================
+    # BINANCE LIVE CHECK
+    # ==========================
+
+    try:
+
+
+        response = requests.get(
+
+            "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT",
+
+            timeout=5
+
+        )
+
+
+        data = response.json()
+
+
+        btc_price = data["price"]
+
+
+        binance_status = (
+
+            "🟢 Binance: Connected\n"
+            f"₿ BTCUSDT: {btc_price}"
+
+        )
 
 
 
     except Exception:
 
-        binance_status = "🔴 Binance: Disconnected"
+
+        binance_status = (
+
+            "🔴 Binance: Disconnected"
+
+        )
 
 
 
+
+
+    # ==========================
+    # TIME
+    # ==========================
 
     current_time = datetime.now().strftime(
-        "%H:%M:%S"
+
+        "%d-%m-%Y %H:%M:%S"
+
     )
+
+
 
 
 
@@ -340,14 +383,18 @@ async def system_status(
 
 {bot_status}
 
+
 {fxcm_status}
+
 
 {binance_status}
 
 
-🕒 Last Check:
+🕒 Last Update:
 {current_time}
 """
+
+
 
 
 
