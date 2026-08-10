@@ -9,7 +9,7 @@ from crypto import get_crypto_price
 from database import (
     get_active_alerts,
     disable_alert,
-    get_pushover_key
+    get_pushover_settings
 )
 
 from pushover import send_pushover
@@ -116,10 +116,10 @@ async def send_alert(user_id, message):
     # PUSHOVER
     # ==========================
 
-    pushover_key = get_pushover_key(user_id)
+    pushover_enabled, pushover_key = get_pushover_settings(user_id)
 
 
-    if pushover_key:
+    if pushover_enabled and pushover_key:
 
         try:
 
@@ -128,6 +128,7 @@ async def send_alert(user_id, message):
                 "🚨 Trading Alert",
                 message
             )
+
 
         except Exception as e:
 
