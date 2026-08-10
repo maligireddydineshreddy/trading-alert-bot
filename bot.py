@@ -1,5 +1,5 @@
 import requests
-from database import save_pushover_key
+
 from datetime import datetime
 from zoneinfo import ZoneInfo
 import os
@@ -76,6 +76,8 @@ async def setpush(update, context):
         user_id,
         pushover_key
     )
+
+    enable_pushover(user_id)
 
     await update.message.reply_text(
         "✅ Pushover notification enabled"
@@ -1152,9 +1154,114 @@ async def menu_handler(
 
 
 
+    # ==================================================
+    # NOTIFICATION SETTINGS
+    # ==================================================
+
+    elif text == "🔔 Notification Settings":
+
+        status = get_pushover_status(user_id)
+
+
+        if status == 1:
+
+            pushover_status = "🟢 Pushover Enabled"
+
+        else:
+
+            pushover_status = "🔴 Pushover Disabled"
+
+
+        await update.message.reply_text(
+
+            f"""
+🔔 Notification Settings
+
+
+{pushover_status}
+
+
+Choose an option:
+""",
+
+            reply_markup=ReplyKeyboardMarkup(
+
+                notification_menu,
+
+                resize_keyboard=True
+
+            )
+
+        )
+
+# ==================================================
+# NOTIFICATION MENU ACTIONS
+# ==================================================
+
+    elif text == "🧪 Test Notification":
+
+        key = get_pushover_key(user_id)
+
+        if not key:
+
+            await update.message.reply_text(
+                "❌ No Pushover key saved.\nUse /setpush first."
+            )
+            return
+
+
+        from pushover import send_pushover
+
+
+        send_pushover(
+            key,
+            "🧪 Test Alert",
+            "✅ Your Trading Alert notifications are working!"
+        )
+
+
+        await update.message.reply_text(
+            "✅ Test notification sent"
+        )
 
 
 
+    elif text == "❌ Disable Pushover":
+
+        disable_pushover(user_id)
+
+
+        await update.message.reply_text(
+
+            "🔴 Pushover Disabled",
+
+            reply_markup=ReplyKeyboardMarkup(
+                main_menu,
+                resize_keyboard=True
+            )
+
+        )
+
+
+
+    elif text == "🔑 Change Pushover Key":
+
+        await update.message.reply_text(
+
+            "Send your new Pushover User Key:\n\n"
+            "Example:\n"
+            "/setpush your_key_here"
+
+        )
+
+
+
+    elif text == "ℹ️ Status":
+
+        await system_status(
+            update,
+            context
+        )
 
 # ==================================================
 # STATUS BUTTON
