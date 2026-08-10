@@ -487,30 +487,113 @@ async def menu_handler(
 
 
     # ==================================================
-    # MARKET BACK BUTTON
+    # REGULAR BACK BUTTON
     # ==================================================
-
 
     elif text == "⬅️ Back":
 
+        market = context.user_data.get("market")
+        symbol = context.user_data.get("symbol")
+        custom_symbol = context.user_data.get("custom_symbol")
 
-        context.user_data.clear()
+        # From selected symbol / target-price screen
+        # Back to the relevant symbol menu
+        if symbol or custom_symbol:
 
+            context.user_data.pop("symbol", None)
+            context.user_data.pop("custom_symbol", None)
 
+            if market == "forex":
 
-        await update.message.reply_text(
+                await update.message.reply_text(
 
-            "🚀 Universal Trading Alert Platform",
+                    "💱 Select Forex Pair",
 
-            reply_markup=ReplyKeyboardMarkup(
+                    reply_markup=ReplyKeyboardMarkup(
+                        forex_menu,
+                        resize_keyboard=True
+                    )
 
-                main_menu,
+                )
 
-                resize_keyboard=True
+            elif market == "crypto":
+
+                await update.message.reply_text(
+
+                    "🪙 Select Crypto Pair",
+
+                    reply_markup=ReplyKeyboardMarkup(
+                        crypto_menu,
+                        resize_keyboard=True
+                    )
+
+                )
+
+            elif market == "commodity":
+
+                await update.message.reply_text(
+
+                    "🥇 Select Commodity",
+
+                    reply_markup=ReplyKeyboardMarkup(
+                        commodity_menu,
+                        resize_keyboard=True
+                    )
+
+                )
+
+            elif market == "indices":
+
+                await update.message.reply_text(
+
+                    "📊 Select Index",
+
+                    reply_markup=ReplyKeyboardMarkup(
+                        indices_menu,
+                        resize_keyboard=True
+                    )
+
+                )
+
+            return
+
+        # From a symbol menu
+        # Back to Select Market
+        elif market:
+
+            context.user_data.clear()
+
+            await update.message.reply_text(
+
+                "🌍 Select Market",
+
+                reply_markup=ReplyKeyboardMarkup(
+                    market_menu,
+                    resize_keyboard=True
+                )
 
             )
 
-        )
+            return
+
+        # From Select Market
+        # Back to the main menu
+        else:
+
+            context.user_data.clear()
+
+            await update.message.reply_text(
+
+                "🚀 Universal Trading Alert Platform",
+
+                reply_markup=ReplyKeyboardMarkup(
+                    main_menu,
+                    resize_keyboard=True
+                )
+
+            )
+
+            return
 
 
 
