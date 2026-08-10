@@ -127,7 +127,7 @@ main_menu = [
 
     ["📈 Add Alert", "📋 My Alerts"],
 
-    ["🗑 Remove Alert","🔔 Notification "],
+    ["🗑 Remove Alert","🔔 Notification Settings"],
 
     ["ℹ️ Status"]
 
