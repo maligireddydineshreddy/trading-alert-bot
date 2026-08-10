@@ -2,7 +2,7 @@ import sqlite3
 import os
 
 
-DB_NAME = "/app/data/alerts.db"
+DB_NAME = "/app/alerts.db"
 
 
 
