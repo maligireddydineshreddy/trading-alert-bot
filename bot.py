@@ -331,7 +331,7 @@ async def system_status(
 
             fxcm_status = (
                 "🟢 FXCM: Connected\n"
-                f"💱 EURUSD: {eurusd_price}"
+                f"💱 EURUSD: {format_market_price('EURUSD', eurusd_price)}"
             )
 
         else:
@@ -377,7 +377,8 @@ async def system_status(
         binance_status = (
 
             "🟢 Binance: Connected\n"
-            f"₿ BTCUSDT: {btc_price}"
+            f"₿ BTCUSDT: {format_market_price('BTCUSDT', btc_price)}"
+
 
         )
 
