@@ -31,7 +31,7 @@ def send_pushover(user_key, title, message):
 
 
         # Repeat every 20 seconds
-        "retry": 20,
+        "retry": 30,
 
 
         # Stop repeating after 10 minutes
