@@ -293,3 +293,38 @@ def enable_pushover(user_id):
     conn.commit()
     conn.close()
 
+
+
+
+
+# ==========================
+# GET PUSHOVER SETTINGS
+# ==========================
+
+def get_pushover_settings(user_id):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+
+    cursor.execute("""
+        SELECT
+            pushover_enabled,
+            pushover_user_key
+        FROM users
+        WHERE telegram_id = ?
+    """, (user_id,))
+
+
+    result = cursor.fetchone()
+
+
+    conn.close()
+
+
+    if result:
+
+        return result[0], result[1]
+
+
+    return 0, None
