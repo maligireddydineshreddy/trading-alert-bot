@@ -26,20 +26,16 @@ def send_pushover(user_key, title, message):
         "message": message,
 
 
-        # Emergency priority
+        # Emergency notification
         "priority": 2,
 
 
-        # Repeat alert every 60 seconds
-        "retry": 60,
+        # Repeat every 20 seconds
+        "retry": 20,
 
 
-        # Stop after 1 hour
-        "expire": 3600,
-
-
-        # Your selected sound
-        "sound": "alien_alarm"
+        # Stop repeating after 10 minutes
+        "expire": 600
 
     }
 
