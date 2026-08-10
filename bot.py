@@ -1277,11 +1277,12 @@ async def save_alert(
             data = get_price(symbol)
 
 
-            current_price = float(
+            bid = float(data["bid"])
+            ask = float(data["ask"])
 
-                data["bid"]
+            current_price = (bid + ask) / 2
 
-            )
+        
 
 
 
