@@ -100,15 +100,65 @@ def send_pushover(user_key, title, message):
 def validate_pushover_key(user_key):
 
 
-    result = send_pushover(
+    if not PUSHOVER_APP_TOKEN:
 
-        user_key,
+        return False
 
-        "🔧 Pushover Setup",
 
-        "✅ Your Trading Alert bot is connected."
 
-    )
+    url = "https://api.pushover.net/1/users/validate.json"
+
+
+
+    data = {
+
+        "token": PUSHOVER_APP_TOKEN,
+
+        "user": user_key
+
+    }
+
+
+
+    try:
+
+        response = requests.post(
+
+            url,
+
+            data=data,
+
+            timeout=10
+
+        )
+
+
+        result = response.json()
+
+
+
+        print(
+            "Pushover Validation:",
+            result,
+            flush=True
+        )
+
+
+        return result.get("status") == 1
+
+
+
+    except Exception as e:
+
+
+        print(
+            "Pushover validation error:",
+            e,
+            flush=True
+        )
+
+
+        return False
 
 
 
