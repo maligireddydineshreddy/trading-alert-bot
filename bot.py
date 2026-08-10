@@ -1,4 +1,5 @@
 import requests
+from database import save_pushover_key
 from datetime import datetime
 from zoneinfo import ZoneInfo
 import os
@@ -53,6 +54,27 @@ import monitor
 
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
+
+async def setpush(update, context):
+
+    user_id = update.effective_user.id
+
+    if not context.args:
+        await update.message.reply_text(
+            "Send your Pushover User Key.\n\nExample:\n/setpush uQi8xxxxxxxx"
+        )
+        return
+
+    pushover_key = context.args[0]
+
+    save_pushover_key(
+        user_id,
+        pushover_key
+    )
+
+    await update.message.reply_text(
+        "✅ Pushover notification enabled"
+    )
 
 
 
@@ -1703,16 +1725,19 @@ def main():
 
 
     app.add_handler(
-
         CommandHandler(
-
             "start",
-
             start
-
         )
-
     )
+    app.add_handler(
+        CommandHandler(
+            "setpush",
+            setpush
+        )
+    )
+
+
 
 
 
